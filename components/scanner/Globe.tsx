@@ -182,7 +182,9 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      st.targetZoom = Math.max(1, Math.min(4, st.targetZoom - e.deltaY * 0.001));
+      // Máx 2.2: acima disso a câmera (z = 5/zoom) entra na atmosfera e
+      // "fura" o planeta — era o que deixava a vista quebrada.
+      st.targetZoom = Math.max(1, Math.min(2.2, st.targetZoom - e.deltaY * 0.001));
     };
     const onResize = () => {
       const nw = canvas.clientWidth || 1;

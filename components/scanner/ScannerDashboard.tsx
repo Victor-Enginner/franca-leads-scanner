@@ -224,7 +224,8 @@ export default function ScannerDashboard({
     termLog("rotação p/ coordenada alvo", "ok");
     globe?.setAutoRotate(false);
     await globe?.spinToFranca(fast, () => skipRef.current);
-    globe?.setTargetZoom(2.6);
+    // Sem zoom automático: a vista orbital inteira fica melhor com a
+    // textura realista (aproximar demais só mostra pixel de oceano).
     setReticleShow(true);
     beep(420, 0.1);
     await skippableWait(1400 * mult);
