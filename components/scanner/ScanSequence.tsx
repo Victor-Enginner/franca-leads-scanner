@@ -35,7 +35,7 @@ export default function ScanSequence({
         SAT·LINK 04 ◥
       </div>
       <div className="pointer-events-none absolute bottom-4 left-4 z-[4] font-mono text-[9px] tracking-wide text-cyan-dim">
-        ◈ ARRASTE P/ GIRAR · SCROLL P/ ZOOM
+        ◈ ARRASTE P/ GIRAR · CTRL+SCROLL P/ ZOOM
       </div>
 
       <button

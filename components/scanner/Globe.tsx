@@ -181,10 +181,14 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
       st.dragging = false;
     };
     const onWheel = (e: WheelEvent) => {
+      // Só com Ctrl (ou pinça no trackpad): scroll normal precisa rolar a
+      // página — sequestrar a roda enterrava a câmera no oceano sem o
+      // usuário perceber.
+      if (!e.ctrlKey) return;
       e.preventDefault();
-      // Máx 2.2: acima disso a câmera (z = 5/zoom) entra na atmosfera e
-      // "fura" o planeta — era o que deixava a vista quebrada.
-      st.targetZoom = Math.max(1, Math.min(2.2, st.targetZoom - e.deltaY * 0.001));
+      // Máx 1.6: acima disso a esfera estoura o quadro e vira "parede"
+      // de textura borrada.
+      st.targetZoom = Math.max(1, Math.min(1.6, st.targetZoom - e.deltaY * 0.001));
     };
     const onResize = () => {
       const nw = canvas.clientWidth || 1;
