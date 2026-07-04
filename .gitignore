@@ -1,0 +1,18 @@
+# dependências
+/node_modules
+
+# build do Next.js
+/.next
+/out
+
+# ambiente — NUNCA commitar: contém as chaves do Supabase e do Google
+.env
+.env*.local
+
+# artefatos locais
+tsconfig.tsbuildinfo
+npm-debug.log*
+.DS_Store
+
+# tooling local do Claude Code
+/.claude
