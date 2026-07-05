@@ -63,6 +63,36 @@ export async function buscarNicho(
   return resultados.slice(0, maxResultados);
 }
 
+export type CidadeGeo = {
+  nome: string;
+  lat: number;
+  lon: number;
+};
+
+/**
+ * Resolve o nome de uma cidade para coordenadas usando o próprio Text
+ * Search do Places (mesma API key, sem precisar ativar a Geocoding API).
+ */
+export async function geocodificarCidade(cidade: string): Promise<CidadeGeo> {
+  const query = encodeURIComponent(cidade);
+  const url = `${PLACES_BASE}/textsearch/json?query=${query}&language=pt-BR&key=${apiKey()}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+
+  if (data.status !== "OK" || !data.results?.length) {
+    throw new Error(`Cidade não encontrada: "${cidade}" (${data.status})`);
+  }
+
+  const r = data.results[0];
+  const lat = r.geometry?.location?.lat;
+  const lon = r.geometry?.location?.lng;
+  if (typeof lat !== "number" || typeof lon !== "number") {
+    throw new Error(`Cidade sem coordenadas: "${cidade}"`);
+  }
+
+  return { nome: r.formatted_address ?? r.name ?? cidade, lat, lon };
+}
+
 const CAMPOS = [
   "name",
   "formatted_address",

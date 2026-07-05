@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
   const nicho = searchParams.get("nicho");
   const status = searchParams.get("status");
   const minScore = searchParams.get("minScore");
+  const cidade = searchParams.get("cidade");
 
   // Modo demo: filtra os seeds em memória.
   if (!supabaseConfigurado()) {
     let leads = [...SEED_LEADS];
     if (nicho) leads = leads.filter((l) => l.nicho === nicho);
     if (status) leads = leads.filter((l) => l.status === status);
+    if (cidade) leads = leads.filter((l) => l.cidade === cidade);
     if (minScore)
       leads = leads.filter((l) => l.score_oportunidade >= Number(minScore));
     return NextResponse.json({ leads });
@@ -29,6 +31,7 @@ export async function GET(req: NextRequest) {
 
   if (nicho) query = query.eq("nicho", nicho);
   if (status) query = query.eq("status", status);
+  if (cidade) query = query.eq("cidade", cidade);
   if (minScore) query = query.gte("score_oportunidade", Number(minScore));
 
   const { data, error } = await query;

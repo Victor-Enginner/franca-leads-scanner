@@ -7,10 +7,18 @@ import ScanSequence from "./ScanSequence";
 import TargetFeed, { type FeedFilter } from "./TargetFeed";
 import FunnelTracker from "./FunnelTracker";
 import SystemLog, { type LogLine } from "./SystemLog";
-import { DEMO_STORE_KEY, scoreColor } from "./util";
+import { DEMO_STORE_KEY, FRANCA, scoreColor } from "./util";
 
 const NICHOS_PADRAO =
   "salão de unhas, barbearia, hamburgueria, academia, estética facial, pet shop";
+
+type Setor = { nome: string; lat: number; lon: number };
+
+const SETOR_PADRAO: Setor = {
+  nome: "Franca, São Paulo",
+  lat: FRANCA.lat,
+  lon: FRANCA.lon,
+};
 
 function agora(): string {
   return new Date().toTimeString().slice(3, 8);
@@ -61,6 +69,8 @@ export default function ScannerDashboard({
   const [sysStatus, setSysStatus] = useState("SISTEMA ONLINE");
   const [toast, setToast] = useState("");
   const [nichosTexto, setNichosTexto] = useState(NICHOS_PADRAO);
+  const [cidadeTexto, setCidadeTexto] = useState("Franca, SP");
+  const [setor, setSetor] = useState<Setor>(SETOR_PADRAO);
   const [logs, setLogs] = useState<LogLine[]>([
     { id: 1, t: "00:00", txt: "núcleo iniciado", cls: "ok" },
     { id: 2, t: "00:01", txt: "uplink orbital", cls: "ok" },
@@ -194,7 +204,7 @@ export default function ScannerDashboard({
     const resp = await fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nichos, cidade: "Franca, SP" }),
+      body: JSON.stringify({ nichos, cidade: cidadeTexto.trim() }),
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error ?? "Falha na varredura");
@@ -219,22 +229,55 @@ export default function ScannerDashboard({
     const fast = hasScannedRef.current;
     const mult = fast ? 0.35 : 1;
 
-    // A varredura real roda em paralelo com a cinemática.
-    const scanPromise = demo ? null : runRealScan();
-    if (scanPromise) scanPromise.catch(() => {}); // evita unhandled rejection; tratado abaixo
+    // Resolve as coordenadas da cidade em paralelo com a fase inicial.
+    // No modo demo não há Google key — fica no setor padrão (Franca).
+    const geocodePromise: Promise<Setor> = demo
+      ? Promise.resolve(SETOR_PADRAO)
+      : fetch(`/api/geocode?cidade=${encodeURIComponent(cidadeTexto.trim())}`)
+          .then(async (r) => {
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error ?? "cidade não encontrada");
+            return d as Setor;
+          });
+    geocodePromise.catch(() => {}); // tratado no await abaixo
 
     setPhase2("AQUISIÇÃO ORBITAL", "estabilizando uplink de satélite...");
     termLog("varredura iniciada", "ok");
-    termLog(demo ? "modo demo · varredura simulada" : "bloqueio orbital → setor BR-SP");
+    termLog(demo ? "modo demo · varredura simulada" : "bloqueio orbital → uplink");
     globe?.setAutoRotate(true);
     globe?.setTargetZoom(1);
     beep(320, 0.1);
     await skippableWait(1400 * mult);
 
-    setPhase2("TRIANGULANDO SETOR", "localizando Franca · -20.53, -47.40");
+    let alvoSetor: Setor;
+    try {
+      alvoSetor = await geocodePromise;
+      setSetor(alvoSetor);
+    } catch (e) {
+      // Cidade inválida: encerra a varredura sem disparar nada no Google.
+      termLog("setor não localizado", "warn");
+      termLog(String(e instanceof Error ? e.message : e).slice(0, 40));
+      showToast("CIDADE NÃO ENCONTRADA — VERIFIQUE O SETOR");
+      setPhase2("", "");
+      setSysStatus("SISTEMA ONLINE");
+      setSkipVisible(false);
+      setIdleVisible(true);
+      scanningRef.current = false;
+      setScanning(false);
+      return;
+    }
+
+    // Só agora dispara a varredura real, com a cidade validada.
+    const scanPromise = demo ? null : runRealScan();
+    if (scanPromise) scanPromise.catch(() => {}); // evita unhandled rejection; tratado abaixo
+
+    setPhase2(
+      "TRIANGULANDO SETOR",
+      `localizando ${alvoSetor.nome} · ${alvoSetor.lat.toFixed(2)}, ${alvoSetor.lon.toFixed(2)}`
+    );
     termLog("rotação p/ coordenada alvo", "ok");
     globe?.setAutoRotate(false);
-    await globe?.spinToFranca(fast, () => skipRef.current);
+    await globe?.spinTo(alvoSetor.lat, alvoSetor.lon, fast, () => skipRef.current);
     // Sem zoom automático: a vista orbital inteira fica melhor com a
     // textura realista (aproximar demais só mostra pixel de oceano).
     setReticleShow(true);
@@ -344,6 +387,7 @@ export default function ScannerDashboard({
     .map((id) => leads.find((l) => l.id === id))
     .filter((l): l is Lead => Boolean(l));
   const quentes = feedLeads.filter((l) => l.score_oportunidade >= 50).length;
+  const setorLabel = setor.nome.split(",")[0].trim().toUpperCase() || "—";
 
   return (
     <main className="min-h-screen">
@@ -371,7 +415,7 @@ export default function ScannerDashboard({
         <div className="flex items-center gap-6">
           <div className="hidden text-right sm:block">
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Setor</div>
-            <div className="font-display text-base font-bold">FRANCA·SP</div>
+            <div className="max-w-[180px] truncate font-display text-base font-bold">{setorLabel}</div>
           </div>
           <div className="text-right">
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Alvos</div>
@@ -405,6 +449,17 @@ export default function ScannerDashboard({
               onChange={(e) => setNichosTexto(e.target.value)}
               className="min-h-[70px] w-full resize-y rounded-sm border border-grid bg-void-2 p-2.5 font-body text-sm font-medium text-text-primary outline-none transition-shadow focus:border-cyan focus:shadow-[0_0_0_1px_#00f0ff,0_0_16px_rgba(0,240,255,0.2)]"
             />
+            <label className="mb-1.5 mt-3 block font-mono text-[9px] uppercase tracking-[2px] text-text-dim">
+              Setor de varredura (cidade)
+            </label>
+            <input
+              value={cidadeTexto}
+              onChange={(e) => setCidadeTexto(e.target.value)}
+              placeholder="ex: Ribeirão Preto, SP"
+              disabled={demo}
+              title={demo ? "No modo demo o setor é fixo em Franca/SP" : undefined}
+              className="w-full rounded-sm border border-grid bg-void-2 p-2.5 font-body text-sm font-medium text-text-primary outline-none transition-shadow focus:border-cyan focus:shadow-[0_0_0_1px_#00f0ff,0_0_16px_rgba(0,240,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50"
+            />
           </div>
 
           <div>
@@ -413,9 +468,9 @@ export default function ScannerDashboard({
               <span className="h-px flex-1 bg-grid" />
             </div>
             <div className="border border-grid bg-void-2 p-3 font-mono text-[11px] leading-loose text-text-dim">
-              <div><span className="text-cyan-dim">SETOR ::</span> <span className="text-text-primary">Franca, São Paulo</span></div>
-              <div><span className="text-cyan-dim">LAT ::</span> <span className="text-text-primary">-20.5386°</span></div>
-              <div><span className="text-cyan-dim">LON ::</span> <span className="text-text-primary">-47.4008°</span></div>
+              <div><span className="text-cyan-dim">SETOR ::</span> <span className="text-text-primary">{setor.nome}</span></div>
+              <div><span className="text-cyan-dim">LAT ::</span> <span className="text-text-primary">{setor.lat.toFixed(4)}°</span></div>
+              <div><span className="text-cyan-dim">LON ::</span> <span className="text-text-primary">{setor.lon.toFixed(4)}°</span></div>
               <div><span className="text-cyan-dim">RAIO ::</span> <span className="text-text-primary">12.0 km</span></div>
             </div>
           </div>

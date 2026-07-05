@@ -16,6 +16,7 @@ create table if not exists leads (
   status text not null default 'não contatado',
   lat numeric,
   lon numeric,
+  cidade text,
   criado_em timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
@@ -23,6 +24,7 @@ create table if not exists leads (
 create index if not exists leads_score_idx on leads (score_oportunidade desc);
 create index if not exists leads_nicho_idx on leads (nicho);
 create index if not exists leads_status_idx on leads (status);
+create index if not exists leads_cidade_idx on leads (cidade);
 
 -- Atualiza atualizado_em automaticamente a cada UPDATE.
 create or replace function set_atualizado_em()
@@ -43,6 +45,11 @@ create trigger leads_set_atualizado_em
 -- existirem, rode só estas duas linhas no SQL Editor:
 alter table leads add column if not exists lat numeric;
 alter table leads add column if not exists lon numeric;
+
+-- Migração Sprint 1 (varredura multi-cidade): rode estas três linhas.
+alter table leads add column if not exists cidade text;
+update leads set cidade = 'Franca, SP' where cidade is null;
+create index if not exists leads_cidade_idx on leads (cidade);
 
 -- RLS fica desligado de propósito: esta é uma ferramenta de uso pessoal,
 -- e todo acesso passa pelas API routes do Next.js usando a service_role

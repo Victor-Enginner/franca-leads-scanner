@@ -60,10 +60,11 @@ export default function TargetCard({
           {lead.score_oportunidade}
         </div>
       </div>
-      <div className="mt-1.5 flex gap-2.5 font-mono text-[9px] tracking-wide text-text-dim">
+      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-0.5 font-mono text-[9px] tracking-wide text-text-dim">
         <span>★ {lead.rating ?? "-"}</span>
         <span>{lead.qtd_reviews ?? 0} rev</span>
         <span>{lead.nicho}</span>
+        {lead.cidade && <span className="text-cyan-dim">◈ {lead.cidade}</span>}
       </div>
       <span
         className={`mt-2 inline-block rounded-[1px] px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide ${TAG_COR[lead.motivo_abordagem] ?? TAG_COR.geral}`}

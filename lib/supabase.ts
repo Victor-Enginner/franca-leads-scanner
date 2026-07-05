@@ -58,6 +58,7 @@ export type Lead = {
   place_id: string;
   lat: number | null;
   lon: number | null;
+  cidade: string | null;
   criado_em: string;
   atualizado_em: string;
 };

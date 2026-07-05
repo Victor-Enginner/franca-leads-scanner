@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
               mensagem_sugerida: mensagem,
               lat: detalhes.geometry?.location?.lat ?? null,
               lon: detalhes.geometry?.location?.lng ?? null,
+              cidade,
             },
             { onConflict: "place_id", ignoreDuplicates: false }
           );

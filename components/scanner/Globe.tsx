@@ -10,8 +10,13 @@ import * as THREE from "three";
 import { FRANCA } from "./util";
 
 export type GlobeHandle = {
-  /** Rotaciona o globo até Franca com easing. Resolve ao terminar ou ao skip. */
-  spinToFranca: (fast: boolean, isSkipped: () => boolean) => Promise<void>;
+  /** Rotaciona o globo até a coordenada com easing. Resolve ao terminar ou ao skip. */
+  spinTo: (
+    lat: number,
+    lon: number,
+    fast: boolean,
+    isSkipped: () => boolean
+  ) => Promise<void>;
   /** Plota um lead na posição lat/lon real, com feixe vertical e pulso. */
   addPoint: (lat: number, lon: number, color: number) => void;
   clearPoints: () => void;
@@ -242,12 +247,12 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
   }, []);
 
   useImperativeHandle(ref, () => ({
-    spinToFranca(fast, isSkipped) {
+    spinTo(lat, lon, fast, isSkipped) {
       return new Promise<void>((res) => {
         const st = stRef.current;
         if (!st) return res();
-        const tY = (-(FRANCA.lon + 180) * Math.PI) / 180 + Math.PI;
-        const tX = ((FRANCA.lat * Math.PI) / 180) * 0.6;
+        const tY = (-(lon + 180) * Math.PI) / 180 + Math.PI;
+        const tX = ((lat * Math.PI) / 180) * 0.6;
         const sY = st.globeGroup.rotation.y % (Math.PI * 2);
         const sX = st.globeGroup.rotation.x;
         // Progresso por tempo decorrido (não por tick): timers podem ser
