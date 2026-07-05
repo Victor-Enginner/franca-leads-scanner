@@ -18,30 +18,41 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  let body: { status?: string };
+  let body: { status?: string; notas?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  if (!body.status || !STATUS_VALIDOS.includes(body.status as LeadStatus)) {
+  // Aceita atualizar status, notas, ou ambos.
+  const patch: { status?: string; notas?: string } = {};
+  if (body.status !== undefined) {
+    if (!STATUS_VALIDOS.includes(body.status as LeadStatus)) {
+      return NextResponse.json(
+        { error: `status precisa ser um de: ${STATUS_VALIDOS.join(", ")}` },
+        { status: 400 }
+      );
+    }
+    patch.status = body.status;
+  }
+  if (body.notas !== undefined) {
+    patch.notas = body.notas;
+  }
+  if (Object.keys(patch).length === 0) {
     return NextResponse.json(
-      { error: `status precisa ser um de: ${STATUS_VALIDOS.join(", ")}` },
+      { error: "envie status e/ou notas" },
       { status: 400 }
     );
   }
 
   // Modo demo: o estado vive só no navegador, então só confirmamos.
   if (!supabaseConfigurado()) {
-    return NextResponse.json({ lead: { id: params.id, status: body.status } });
+    return NextResponse.json({ lead: { id: params.id, ...patch } });
   }
 
   const supabase = getSupabaseServerClient();
-  let query = supabase
-    .from("leads")
-    .update({ status: body.status })
-    .eq("id", params.id);
+  let query = supabase.from("leads").update(patch).eq("id", params.id);
 
   // Modo multiusuário: só o dono do lead pode alterar o status dele.
   if (authConfigurado()) {

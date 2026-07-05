@@ -29,6 +29,7 @@ export const SEED_LEADS: Lead[] = [
       "Posso te mandar um exemplo rápido de como ficaria o site e o fluxo " +
       "de agendamento de vocês? Sem compromisso, só pra vocês verem a ideia.",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -57,6 +58,7 @@ export const SEED_LEADS: Lead[] = [
       "site simples com agendamento automático pelo WhatsApp. Posso te " +
       "mostrar como ficaria o seu, sem compromisso?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -86,6 +88,7 @@ export const SEED_LEADS: Lead[] = [
       "pesquisando agora. Posso te mandar uma ideia de como ficaria, sem " +
       "compromisso?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -111,6 +114,7 @@ export const SEED_LEADS: Lead[] = [
       "Google. Sou Vitor do @engenheiro.ai, ajudo hamburgueria a vender " +
       "mais com site + automação de pedido. Posso te mostrar como ficaria?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -135,6 +139,7 @@ export const SEED_LEADS: Lead[] = [
       "fácil. Isso aí é oportunidade. Sou Vitor do @engenheiro.ai. Ajudo " +
       "lanchonete a vender mais. Pode ser?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -159,6 +164,7 @@ export const SEED_LEADS: Lead[] = [
       "pesquisando no Google. Sou Vitor do @engenheiro.ai. Quer ver como " +
       "ficaria?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -182,6 +188,7 @@ export const SEED_LEADS: Lead[] = [
       "Instagram ainda. Um site próprio + agendamento no WhatsApp aumenta " +
       "demanda. Sou Vitor do @engenheiro.ai. Quer conversar?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -205,6 +212,7 @@ export const SEED_LEADS: Lead[] = [
       "ainda. Isso é oportunidade pra crescer. Sou Vitor do @engenheiro.ai, " +
       "ajudo academias a vender mais e aumentar avaliações. Posso ajudar?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -227,6 +235,7 @@ export const SEED_LEADS: Lead[] = [
       "Oi! Vi a SIM aqui em Franca. Tá bem estruturada já. Ajudo com " +
       "automação de WhatsApp e conversão. Topa conversar?",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },
@@ -249,6 +258,7 @@ export const SEED_LEADS: Lead[] = [
       "Oi! Hugg's é cliente em potencial. Tá bem estabelecido já, mas " +
       "sempre dá pra melhorar conversão. Posso mostrar.",
     status: "não contatado",
+    notas: null,
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   },

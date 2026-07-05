@@ -17,6 +17,7 @@ create table if not exists leads (
   lat numeric,
   lon numeric,
   cidade text,
+  notas text,
   criado_em timestamptz not null default now(),
   atualizado_em timestamptz not null default now()
 );
@@ -50,6 +51,9 @@ alter table leads add column if not exists lon numeric;
 alter table leads add column if not exists cidade text;
 update leads set cidade = 'Franca, SP' where cidade is null;
 create index if not exists leads_cidade_idx on leads (cidade);
+
+-- Migração Sprint 4 (CRM): anotações por lead. Rode esta linha.
+alter table leads add column if not exists notas text;
 
 -- ============================================================
 -- Migração Sprint 2 (multiusuário) — RODE SOMENTE quando for ativar o

@@ -7,7 +7,11 @@ import ScanSequence from "./ScanSequence";
 import TargetFeed, { type FeedFilter } from "./TargetFeed";
 import FunnelTracker from "./FunnelTracker";
 import SystemLog, { type LogLine } from "./SystemLog";
+import KanbanBoard from "./KanbanBoard";
+import { baixarCSV, abrirRelatorio } from "./export";
 import { DEMO_STORE_KEY, FRANCA, scoreColor } from "./util";
+
+type Vista = "radar" | "funil";
 
 const NICHOS_PADRAO =
   "salão de unhas, barbearia, hamburgueria, academia, estética facial, pet shop";
@@ -75,6 +79,7 @@ export default function ScannerDashboard({
   const [nichosTexto, setNichosTexto] = useState(NICHOS_PADRAO);
   const [cidadeTexto, setCidadeTexto] = useState("Franca, SP");
   const [setor, setSetor] = useState<Setor>(SETOR_PADRAO);
+  const [vista, setVista] = useState<Vista>("radar");
   const [quota, setQuota] = useState<{
     plano: string;
     varreduras_limite: number;
@@ -397,6 +402,25 @@ export default function ScannerDashboard({
     }
   }
 
+  // Salva anotação do lead (kanban). Demo → só em memória.
+  async function handleNotasChange(lead: Lead, notas: string) {
+    setLeads((atual) =>
+      atual.map((l) => (l.id === lead.id ? { ...l, notas } : l))
+    );
+    showToast("NOTA SALVA ✓");
+    if (demo) return;
+    try {
+      const resp = await fetch(`/api/leads/${lead.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notas }),
+      });
+      if (!resp.ok) throw new Error();
+    } catch {
+      showToast("ERRO AO SALVAR NOTA");
+    }
+  }
+
   function handleCopy(lead: Lead) {
     navigator.clipboard
       .writeText(lead.mensagem_sugerida)
@@ -480,7 +504,22 @@ export default function ScannerDashboard({
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Quentes</div>
             <div className="font-display text-base font-bold text-amber">{quentes}</div>
           </div>
-          <div className="flex items-center gap-2 rounded-sm border border-cyan-dim bg-cyan/5 px-3.5 py-1.5 font-mono text-[11px] tracking-[2px] text-cyan">
+          <div className="flex overflow-hidden rounded-sm border border-grid">
+            {(["radar", "funil"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setVista(v)}
+                className={`px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] transition-colors ${
+                  vista === v
+                    ? "bg-cyan/15 text-cyan"
+                    : "bg-void-2 text-text-dim hover:text-cyan"
+                }`}
+              >
+                {v === "radar" ? "◈ radar" : "▤ funil"}
+              </button>
+            ))}
+          </div>
+          <div className="hidden items-center gap-2 rounded-sm border border-cyan-dim bg-cyan/5 px-3.5 py-1.5 font-mono text-[11px] tracking-[2px] text-cyan lg:flex">
             <span className="h-[7px] w-[7px] animate-blink rounded-full bg-lime shadow-[0_0_8px_#7dff5c]" />
             {sysStatus}
           </div>
@@ -503,8 +542,8 @@ export default function ScannerDashboard({
         </div>
       </div>
 
-      {/* Palco em 3 colunas */}
-      <div className="relative grid h-auto lg:h-[calc(100vh-73px)] lg:grid-cols-[300px_1fr_360px]">
+      {/* Palco: rail esquerdo + área de trabalho (radar OU funil) */}
+      <div className="relative grid h-auto lg:h-[calc(100vh-73px)] lg:grid-cols-[300px_1fr]">
         {/* Rail esquerdo */}
         <div className="flex flex-col gap-4 overflow-y-auto border-b border-grid bg-gradient-to-r from-panel/60 to-transparent p-5 lg:border-b-0 lg:border-r">
           <div>
@@ -599,6 +638,15 @@ export default function ScannerDashboard({
           </div>
         </div>
 
+        {/* Área de trabalho: alterna entre radar (globo+feed) e funil (kanban).
+            O globo NUNCA desmonta — só é escondido via CSS pra preservar o
+            contexto WebGL. */}
+        <div className="relative lg:min-h-0 lg:overflow-hidden">
+        <div
+          className={`grid h-full grid-rows-[380px_auto] lg:grid-rows-1 lg:grid-cols-[1fr_360px] ${
+            vista === "funil" ? "hidden" : ""
+          }`}
+        >
         {/* Palco do globo */}
         <div className="relative min-h-[380px] overflow-hidden bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(0,240,255,0.04),transparent)]">
           <Globe ref={globeRef} />
@@ -634,6 +682,49 @@ export default function ScannerDashboard({
             onGerarIA={handleGerarIA}
             iaAtiva={iaAtiva}
           />
+        </div>
+        </div>
+
+        {/* Funil kanban (ocupa toda a área de trabalho) */}
+        {vista === "funil" && (
+          <div className="flex h-full min-h-[380px] flex-col">
+            <div className="flex items-center gap-3 border-b border-grid px-4 py-2.5">
+              <span className="font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
+                ▤ Funil de vendas
+              </span>
+              <span className="font-mono text-[9px] tracking-wide text-text-dim">
+                {leads.length} leads · arraste entre as colunas
+              </span>
+              <div className="ml-auto flex gap-1.5">
+                <button
+                  onClick={() =>
+                    baixarCSV(
+                      leads,
+                      `nexus-${setorLabel.toLowerCase()}.csv`
+                    )
+                  }
+                  className="rounded-sm border border-grid px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide text-text-dim transition-colors hover:border-cyan-dim hover:text-cyan"
+                >
+                  ⭳ csv
+                </button>
+                <button
+                  onClick={() => abrirRelatorio(leads, setor.nome)}
+                  className="rounded-sm border border-cyan-dim bg-cyan/5 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide text-cyan transition-colors hover:bg-cyan/15"
+                >
+                  ⎙ relatório / pdf
+                </button>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1">
+              <KanbanBoard
+                leads={leads}
+                onStatusChange={mudarStatus}
+                onNotasChange={handleNotasChange}
+                onCopy={handleCopy}
+              />
+            </div>
+          </div>
+        )}
         </div>
       </div>
 
