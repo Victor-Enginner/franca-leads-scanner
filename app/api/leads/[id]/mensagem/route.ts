@@ -6,7 +6,7 @@ import {
 import type { Lead } from "@/lib/supabase";
 import { SEED_LEADS } from "@/lib/seed-data";
 import { authConfigurado, getUsuario } from "@/lib/auth";
-import { iaConfigurada, gerarMensagemIA } from "@/lib/claude";
+import { iaConfigurada, gerarMensagemIA } from "@/lib/ia";
 import { checarSite } from "@/lib/enrich";
 
 export const maxDuration = 30;
@@ -20,7 +20,7 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          "Geração por IA não configurada — defina ANTHROPIC_API_KEY no ambiente.",
+          "Geração por IA não configurada — defina GROQ_API_KEY no ambiente.",
       },
       { status: 400 }
     );

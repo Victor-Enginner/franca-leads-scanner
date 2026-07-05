@@ -1,11 +1,14 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Lead } from "./supabase";
 import type { SiteInfo } from "./enrich";
 
-// A geração por IA só liga quando há chave. Sem ela, o app usa os
-// templates de scoring.ts (retrocompatível — deploy seguro).
+// Geração de mensagens via Groq (grátis, sem cartão). Roda Llama 3.3 70B.
+// A geração só liga quando há chave — sem ela, usa os templates de
+// scoring.ts (retrocompatível). API compatível com OpenAI.
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODELO = "llama-3.3-70b-versatile";
+
 export function iaConfigurada(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY);
+  return Boolean(process.env.GROQ_API_KEY);
 }
 
 const SYSTEM = `Você é o Vitor, do @engenheiro.ai — ajuda negócios locais a vender mais com site, automação de WhatsApp e presença digital. Escreve mensagens de PRIMEIRA abordagem por WhatsApp, em português do Brasil.
@@ -18,7 +21,7 @@ Regras da mensagem:
 - Termine com uma pergunta de baixo compromisso ("posso te mostrar uma ideia rápida, sem compromisso?").
 - Assine como "Vitor, do @engenheiro.ai".
 - Não invente dados que não foram fornecidos. Não use emojis em excesso (no máximo 1).
-- Responda APENAS com o texto da mensagem, sem aspas, sem preâmbulo.`;
+- Responda APENAS com o texto da mensagem, sem aspas, sem preâmbulo, sem explicação.`;
 
 function contexto(lead: Lead, site: SiteInfo): string {
   const linhas = [
@@ -41,34 +44,37 @@ function contexto(lead: Lead, site: SiteInfo): string {
   return linhas.join("\n");
 }
 
-/**
- * Gera a mensagem de abordagem personalizada via Claude.
- * Modelo: claude-opus-4-8 (padrão da referência). Sem thinking e
- * max_tokens baixo pra ser rápido/barato numa geração curta e repetida.
- */
 export async function gerarMensagemIA(
   lead: Lead,
   site: SiteInfo
 ): Promise<string> {
-  const client = new Anthropic();
-  const resp = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 512,
-    system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `Escreva a mensagem de abordagem para este lead:\n\n${contexto(lead, site)}`,
-      },
-    ],
+  const resp = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODELO,
+      temperature: 0.85,
+      max_tokens: 400,
+      messages: [
+        { role: "system", content: SYSTEM },
+        {
+          role: "user",
+          content: `Escreva a mensagem de abordagem para este lead:\n\n${contexto(lead, site)}`,
+        },
+      ],
+    }),
   });
 
-  const texto = resp.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("")
-    .trim();
+  if (!resp.ok) {
+    const detalhe = await resp.text().catch(() => "");
+    throw new Error(`Groq retornou ${resp.status}: ${detalhe.slice(0, 120)}`);
+  }
 
+  const data = await resp.json();
+  const texto = String(data.choices?.[0]?.message?.content ?? "").trim();
   if (!texto) throw new Error("IA retornou resposta vazia");
   return texto;
 }

@@ -32,7 +32,7 @@ export default function ScanSequence({
         ◤ ORBITAL VIEW
       </div>
       <div className="pointer-events-none absolute right-4 top-12 z-[4] font-mono text-[9px] tracking-wide text-cyan-dim">
-        SAT·LINK 04 · V7 ◥
+        SAT·LINK 04 · V8 ◥
       </div>
       <div className="pointer-events-none absolute bottom-4 left-4 z-[4] font-mono text-[9px] tracking-wide text-cyan-dim">
         ◈ ARRASTE P/ GIRAR · CTRL+SCROLL P/ ZOOM
