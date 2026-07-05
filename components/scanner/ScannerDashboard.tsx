@@ -46,10 +46,12 @@ export default function ScannerDashboard({
   leadsIniciais,
   demo = false,
   usuarioEmail = null,
+  iaAtiva = false,
 }: {
   leadsIniciais: Lead[];
   demo?: boolean;
   usuarioEmail?: string | null;
+  iaAtiva?: boolean;
 }) {
   const ordenados = [...leadsIniciais].sort(
     (a, b) => b.score_oportunidade - a.score_oportunidade
@@ -408,6 +410,27 @@ export default function ScannerDashboard({
     showToast("ABRINDO WHATSAPP →");
   }
 
+  // Gera nova mensagem via IA e atualiza o card em memória.
+  async function handleGerarIA(lead: Lead) {
+    try {
+      const resp = await fetch(`/api/leads/${lead.id}/mensagem`, {
+        method: "POST",
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "falha na IA");
+      setLeads((atual) =>
+        atual.map((l) =>
+          l.id === lead.id ? { ...l, mensagem_sugerida: data.mensagem } : l
+        )
+      );
+      showToast("MENSAGEM GERADA POR IA ✦");
+      beep(680, 0.08);
+    } catch (e) {
+      showToast("FALHA NA IA — VER CONSOLE");
+      console.error("gerarIA:", e);
+    }
+  }
+
   function handleToggleDone(lead: Lead) {
     const fechado = lead.status === "fechado";
     mudarStatus(lead, fechado ? "não contatado" : "fechado");
@@ -608,6 +631,8 @@ export default function ScannerDashboard({
             onCopy={handleCopy}
             onWhatsApp={handleWhatsApp}
             onToggleDone={handleToggleDone}
+            onGerarIA={handleGerarIA}
+            iaAtiva={iaAtiva}
           />
         </div>
       </div>

@@ -3,6 +3,7 @@ import { getSupabaseServerClient, supabaseConfigurado } from "@/lib/supabase";
 import type { Lead } from "@/lib/supabase";
 import { SEED_LEADS } from "@/lib/seed-data";
 import { authConfigurado, getUsuario } from "@/lib/auth";
+import { iaConfigurada } from "@/lib/claude";
 import ScannerDashboard from "@/components/scanner/ScannerDashboard";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function Home() {
       leadsIniciais={leads}
       demo={demo}
       usuarioEmail={usuarioEmail}
+      iaAtiva={iaConfigurada()}
     />
   );
 }

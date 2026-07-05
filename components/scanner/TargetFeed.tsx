@@ -22,6 +22,8 @@ export default function TargetFeed({
   onCopy,
   onWhatsApp,
   onToggleDone,
+  onGerarIA,
+  iaAtiva = false,
 }: {
   leads: Lead[];
   filter: FeedFilter;
@@ -30,6 +32,8 @@ export default function TargetFeed({
   onCopy: (lead: Lead) => void;
   onWhatsApp: (lead: Lead) => void;
   onToggleDone: (lead: Lead) => void;
+  onGerarIA?: (lead: Lead) => Promise<void>;
+  iaAtiva?: boolean;
 }) {
   const [busca, setBusca] = useState("");
   const [nichoSel, setNichoSel] = useState("todos");
@@ -155,6 +159,8 @@ export default function TargetFeed({
                 onCopy={onCopy}
                 onWhatsApp={onWhatsApp}
                 onToggleDone={onToggleDone}
+                onGerarIA={onGerarIA}
+                iaAtiva={iaAtiva}
               />
             ))}
             {restantes > 0 && (

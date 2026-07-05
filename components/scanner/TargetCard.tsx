@@ -28,16 +28,32 @@ export default function TargetCard({
   onCopy,
   onWhatsApp,
   onToggleDone,
+  onGerarIA,
+  iaAtiva = false,
 }: {
   lead: Lead;
   onCopy: (lead: Lead) => void;
   onWhatsApp: (lead: Lead) => void;
   onToggleDone: (lead: Lead) => void;
+  onGerarIA?: (lead: Lead) => Promise<void>;
+  iaAtiva?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [gerando, setGerando] = useState(false);
   const cls = scoreClass(lead.score_oportunidade);
   const done = lead.status === "fechado";
   const wa = waHref(lead);
+
+  async function gerarIA(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!onGerarIA || gerando) return;
+    setGerando(true);
+    try {
+      await onGerarIA(lead);
+    } finally {
+      setGerando(false);
+    }
+  }
 
   return (
     <div
@@ -75,9 +91,24 @@ export default function TargetCard({
       <div
         className={`overflow-hidden transition-[max-height] duration-300 ease-out ${open ? "max-h-[360px]" : "max-h-0"}`}
       >
-        <div className="mt-3 max-h-[130px] overflow-y-auto rounded-sm border border-grid bg-void p-2.5 font-body text-xs leading-normal text-text-dim">
-          {lead.mensagem_sugerida}
+        <div className="relative mt-3 max-h-[130px] overflow-y-auto rounded-sm border border-grid bg-void p-2.5 font-body text-xs leading-normal text-text-dim">
+          {gerando ? (
+            <span className="animate-blink-slow font-mono text-[10px] tracking-wide text-magenta">
+              ✦ gerando abordagem personalizada com IA...
+            </span>
+          ) : (
+            lead.mensagem_sugerida
+          )}
         </div>
+        {iaAtiva && (
+          <button
+            onClick={gerarIA}
+            disabled={gerando}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded-sm border border-magenta/60 bg-magenta/5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide text-magenta transition-colors hover:bg-magenta/15 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {gerando ? "processando..." : "✦ gerar mensagem com IA"}
+          </button>
+        )}
         <div className="mt-2.5 flex gap-1.5">
           <button
             className="flex flex-1 items-center justify-center gap-1 rounded-sm border border-cyan-dim bg-transparent px-2 py-2 font-mono text-[9px] uppercase tracking-wide text-cyan transition-colors hover:bg-cyan/15"
