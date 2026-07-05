@@ -477,8 +477,11 @@ export default function ScannerDashboard({
           />
         </div>
 
-        {/* Rail direito: feed de alvos */}
-        <div className="border-t border-grid bg-gradient-to-l from-panel/60 to-transparent lg:border-l lg:border-t-0">
+        {/* Rail direito: feed de alvos. min-h-0 + overflow-hidden no lg são
+            OBRIGATÓRIOS: sem eles, centenas de cards esticam a linha do
+            grid (e o palco do globo junto) pra dezenas de milhares de px —
+            o canvas vira uma "parede" e só uma fatia aparece na tela. */}
+        <div className="border-t border-grid bg-gradient-to-l from-panel/60 to-transparent lg:min-h-0 lg:overflow-hidden lg:border-l lg:border-t-0">
           <TargetFeed
             leads={feedLeads}
             filter={filter}

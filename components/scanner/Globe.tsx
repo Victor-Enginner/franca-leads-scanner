@@ -202,6 +202,10 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
       st.camera.updateProjectionMatrix();
       st.renderer.setSize(nw, nh, false);
     };
+    // O palco muda de tamanho sem resize de janela (feed enchendo/limpando
+    // muda o layout do grid) — ResizeObserver cobre esses casos.
+    const ro = new ResizeObserver(onResize);
+    ro.observe(canvas);
     // GPU sobrecarregada (muitas abas, stream, driver) pode descartar o
     // contexto WebGL — sem esses handlers o canvas fica preto pra sempre.
     // preventDefault permite o restore automático; o three recarrega os
@@ -231,6 +235,7 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
       window.removeEventListener("resize", onResize);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       canvas.removeEventListener("webglcontextrestored", onContextRestored);
+      ro.disconnect();
       st.renderer.dispose();
       stRef.current = null;
     };
