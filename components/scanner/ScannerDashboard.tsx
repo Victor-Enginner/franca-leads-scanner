@@ -45,9 +45,11 @@ function salvarStatusDemo(id: string, status: LeadStatus) {
 export default function ScannerDashboard({
   leadsIniciais,
   demo = false,
+  usuarioEmail = null,
 }: {
   leadsIniciais: Lead[];
   demo?: boolean;
+  usuarioEmail?: string | null;
 }) {
   const ordenados = [...leadsIniciais].sort(
     (a, b) => b.score_oportunidade - a.score_oportunidade
@@ -71,6 +73,11 @@ export default function ScannerDashboard({
   const [nichosTexto, setNichosTexto] = useState(NICHOS_PADRAO);
   const [cidadeTexto, setCidadeTexto] = useState("Franca, SP");
   const [setor, setSetor] = useState<Setor>(SETOR_PADRAO);
+  const [quota, setQuota] = useState<{
+    plano: string;
+    varreduras_limite: number;
+    varreduras_usadas: number;
+  } | null>(null);
   const [logs, setLogs] = useState<LogLine[]>([
     { id: 1, t: "00:00", txt: "núcleo iniciado", cls: "ok" },
     { id: 2, t: "00:01", txt: "uplink orbital", cls: "ok" },
@@ -120,6 +127,30 @@ export default function ScannerDashboard({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
+
+  // Cota do plano (só no modo multiusuário).
+  const carregarQuota = () => {
+    if (demo || !usuarioEmail) return;
+    fetch("/api/perfil")
+      .then((r) => r.json())
+      .then((d) => d.perfil && setQuota(d.perfil))
+      .catch(() => {});
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(carregarQuota, []);
+
+  async function sair() {
+    try {
+      const { getSupabaseBrowser, authAtivoNoCliente } = await import(
+        "@/lib/supabase-browser"
+      );
+      if (authAtivoNoCliente()) {
+        await getSupabaseBrowser().auth.signOut();
+      }
+    } finally {
+      window.location.href = "/login";
+    }
+  }
 
   // O Chrome pode restaurar a página congelada da memória (back/forward
   // cache) com câmera, estado E código de versões antigas. Nesse caso,
@@ -336,6 +367,7 @@ export default function ScannerDashboard({
     scanningRef.current = false;
     setScanning(false);
     hasScannedRef.current = true;
+    carregarQuota();
   }
 
   // Muda status: PATCH no backend real; localStorage no modo demo.
@@ -429,6 +461,22 @@ export default function ScannerDashboard({
             <span className="h-[7px] w-[7px] animate-blink rounded-full bg-lime shadow-[0_0_8px_#7dff5c]" />
             {sysStatus}
           </div>
+          {usuarioEmail && (
+            <div className="hidden items-center gap-2 md:flex">
+              <span
+                className="max-w-[140px] truncate font-mono text-[9px] text-text-dim"
+                title={usuarioEmail}
+              >
+                {usuarioEmail}
+              </span>
+              <button
+                onClick={sair}
+                className="rounded-sm border border-grid px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-wide text-text-dim transition-colors hover:border-danger hover:text-danger"
+              >
+                sair
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -487,6 +535,21 @@ export default function ScannerDashboard({
               ◈ {hasScannedRef.current ? "NOVA VARREDURA" : "INICIAR VARREDURA"}
             </span>
           </button>
+
+          {quota && (
+            <div className="flex items-center justify-between border border-grid bg-void-2 px-3 py-2 font-mono text-[9px] uppercase tracking-[2px]">
+              <span className="text-text-dim">Plano {quota.plano}</span>
+              <span
+                className={
+                  quota.varreduras_usadas >= quota.varreduras_limite
+                    ? "text-danger"
+                    : "text-cyan"
+                }
+              >
+                Varreduras {quota.varreduras_usadas}/{quota.varreduras_limite}
+              </span>
+            </div>
+          )}
 
           {demo && (
             <p className="border border-amber/30 bg-amber/5 p-2.5 font-mono text-[10px] leading-relaxed text-amber">

@@ -5,6 +5,8 @@ import {
 } from "@/lib/supabase";
 import { buscarNicho, detalhesDoLugar } from "@/lib/places";
 import { scoreOportunidade, gerarMensagem } from "@/lib/scoring";
+import { authConfigurado, getUsuario } from "@/lib/auth";
+import { getOuCriarPerfil, consumirVarredura } from "@/lib/perfil";
 
 export const maxDuration = 60; // varredura pode levar um tempinho
 
@@ -42,6 +44,28 @@ export async function POST(req: NextRequest) {
       },
       { status: 400 }
     );
+  }
+
+  // Modo multiusuário: exige login e respeita a cota do plano.
+  let userId: string | null = null;
+  if (authConfigurado()) {
+    const usuario = await getUsuario();
+    if (!usuario) {
+      return NextResponse.json({ error: "não autenticado" }, { status: 401 });
+    }
+    const perfil = await getOuCriarPerfil(usuario.id, usuario.email ?? "");
+    if (perfil.varreduras_usadas >= perfil.varreduras_limite) {
+      return NextResponse.json(
+        {
+          error:
+            `Limite do plano ${perfil.plano} atingido ` +
+            `(${perfil.varreduras_limite} varreduras/mês). ` +
+            "Fale com o suporte pra ampliar.",
+        },
+        { status: 429 }
+      );
+    }
+    userId = usuario.id;
   }
 
   const supabase = getSupabaseServerClient();
@@ -85,8 +109,14 @@ export async function POST(req: NextRequest) {
               lat: detalhes.geometry?.location?.lat ?? null,
               lon: detalhes.geometry?.location?.lng ?? null,
               cidade,
+              ...(userId ? { user_id: userId } : {}),
             },
-            { onConflict: "place_id", ignoreDuplicates: false }
+            {
+              // Multiusuário: cada operador tem seu próprio universo de
+              // leads — o mesmo negócio pode existir pra dois usuários.
+              onConflict: userId ? "user_id,place_id" : "place_id",
+              ignoreDuplicates: false,
+            }
           );
 
           if (error) throw error;
@@ -106,6 +136,8 @@ export async function POST(req: NextRequest) {
       erros.push(`Falha ao buscar nicho "${nicho}": ${descreverErro(nichoErr)}`);
     }
   }
+
+  if (userId) await consumirVarredura(userId);
 
   return NextResponse.json({ resumo, erros });
 }

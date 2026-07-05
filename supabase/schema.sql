@@ -51,6 +51,33 @@ alter table leads add column if not exists cidade text;
 update leads set cidade = 'Franca, SP' where cidade is null;
 create index if not exists leads_cidade_idx on leads (cidade);
 
+-- ============================================================
+-- Migração Sprint 2 (multiusuário) — RODE SOMENTE quando for ativar o
+-- login (junto com as envs NEXT_PUBLIC_*, ver GUIA-ATIVACAO-AUTH.md).
+-- Depois deste bloco, o app antigo sem login não consegue mais salvar
+-- varreduras (a unicidade de place_id passa a ser por usuário).
+-- ============================================================
+alter table leads add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table leads drop constraint if exists leads_place_id_key;
+create unique index if not exists leads_user_place_idx on leads (user_id, place_id);
+create index if not exists leads_user_idx on leads (user_id);
+
+create table if not exists perfis (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  plano text not null default 'beta',
+  varreduras_limite int not null default 10,
+  varreduras_usadas int not null default 0,
+  ciclo_inicio date not null default current_date,
+  criado_em timestamptz not null default now()
+);
+
+-- Passo final (depois de criar SUA conta no /login): adote os leads
+-- antigos trocando SEU_EMAIL pelo e-mail que você cadastrou.
+-- update leads
+--   set user_id = (select id from auth.users where email = 'SEU_EMAIL')
+--   where user_id is null;
+
 -- RLS fica desligado de propósito: esta é uma ferramenta de uso pessoal,
 -- e todo acesso passa pelas API routes do Next.js usando a service_role
 -- key (nunca exposta ao navegador). Se um dia isso virar multiusuário,

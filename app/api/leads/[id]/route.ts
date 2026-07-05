@@ -4,6 +4,7 @@ import {
   supabaseConfigurado,
 } from "@/lib/supabase";
 import type { LeadStatus } from "@/lib/supabase";
+import { authConfigurado, getUsuario } from "@/lib/auth";
 
 const STATUS_VALIDOS: LeadStatus[] = [
   "não contatado",
@@ -37,12 +38,21 @@ export async function PATCH(
   }
 
   const supabase = getSupabaseServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("leads")
     .update({ status: body.status })
-    .eq("id", params.id)
-    .select()
-    .single();
+    .eq("id", params.id);
+
+  // Modo multiusuário: só o dono do lead pode alterar o status dele.
+  if (authConfigurado()) {
+    const usuario = await getUsuario();
+    if (!usuario) {
+      return NextResponse.json({ error: "não autenticado" }, { status: 401 });
+    }
+    query = query.eq("user_id", usuario.id);
+  }
+
+  const { data, error } = await query.select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,11 +1,15 @@
+import { redirect } from "next/navigation";
 import { getSupabaseServerClient, supabaseConfigurado } from "@/lib/supabase";
 import type { Lead } from "@/lib/supabase";
 import { SEED_LEADS } from "@/lib/seed-data";
+import { authConfigurado, getUsuario } from "@/lib/auth";
 import ScannerDashboard from "@/components/scanner/ScannerDashboard";
 
 export const dynamic = "force-dynamic";
 
-async function getLeadsIniciais(): Promise<{ leads: Lead[]; demo: boolean }> {
+async function getLeadsIniciais(
+  userId: string | null
+): Promise<{ leads: Lead[]; demo: boolean }> {
   // Sem Supabase configurado → modo demo com os leads reais de Franca.
   if (!supabaseConfigurado()) {
     return { leads: SEED_LEADS, demo: true };
@@ -13,10 +17,12 @@ async function getLeadsIniciais(): Promise<{ leads: Lead[]; demo: boolean }> {
 
   try {
     const supabase = getSupabaseServerClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from("leads")
       .select("*")
       .order("score_oportunidade", { ascending: false });
+    if (userId) query = query.eq("user_id", userId);
+    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -32,6 +38,22 @@ async function getLeadsIniciais(): Promise<{ leads: Lead[]; demo: boolean }> {
 }
 
 export default async function Home() {
-  const { leads, demo } = await getLeadsIniciais();
-  return <ScannerDashboard leadsIniciais={leads} demo={demo} />;
+  // Multiusuário ativo → exige sessão; sem sessão vai pro /login.
+  let usuarioEmail: string | null = null;
+  let usuarioId: string | null = null;
+  if (supabaseConfigurado() && authConfigurado()) {
+    const usuario = await getUsuario();
+    if (!usuario) redirect("/login");
+    usuarioEmail = usuario.email ?? null;
+    usuarioId = usuario.id;
+  }
+
+  const { leads, demo } = await getLeadsIniciais(usuarioId);
+  return (
+    <ScannerDashboard
+      leadsIniciais={leads}
+      demo={demo}
+      usuarioEmail={usuarioEmail}
+    />
+  );
 }

@@ -4,6 +4,7 @@ import {
   supabaseConfigurado,
 } from "@/lib/supabase";
 import { SEED_LEADS } from "@/lib/seed-data";
+import { authConfigurado, getUsuario } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -28,6 +29,15 @@ export async function GET(req: NextRequest) {
     .from("leads")
     .select("*")
     .order("score_oportunidade", { ascending: false });
+
+  // Modo multiusuário: cada operador só enxerga os próprios leads.
+  if (authConfigurado()) {
+    const usuario = await getUsuario();
+    if (!usuario) {
+      return NextResponse.json({ error: "não autenticado" }, { status: 401 });
+    }
+    query = query.eq("user_id", usuario.id);
+  }
 
   if (nicho) query = query.eq("nicho", nicho);
   if (status) query = query.eq("status", status);
