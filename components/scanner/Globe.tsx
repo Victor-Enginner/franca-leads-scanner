@@ -153,7 +153,12 @@ const Globe = forwardRef<GlobeHandle>(function Globe(_props, ref) {
     function animate() {
       st.raf = requestAnimationFrame(animate);
       if (st.autoRotate && !st.dragging) st.globeGroup.rotation.y += 0.0018;
+      // Trava dura de zoom a cada frame: mesmo que um estado restaurado
+      // de cache (bfcache) ou qualquer bug futuro injete um zoom maior,
+      // a câmera nunca chega perto da superfície (z mínimo ≈ 3.1).
+      st.targetZoom = Math.max(1, Math.min(1.6, st.targetZoom));
       st.zoomLevel += (st.targetZoom - st.zoomLevel) * 0.06;
+      st.zoomLevel = Math.max(1, Math.min(1.6, st.zoomLevel));
       st.camera.position.z = 5 / st.zoomLevel;
       st.pointsGroup.children.forEach((p) => {
         if (p.userData.pulse) {

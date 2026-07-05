@@ -111,6 +111,17 @@ export default function ScannerDashboard({
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  // O Chrome pode restaurar a página congelada da memória (back/forward
+  // cache) com câmera, estado E código de versões antigas. Nesse caso,
+  // recarrega pra garantir estado limpo e bundle atual.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   function beep(freq: number, dur = 0.08, vol = 0.05) {
     if (!soundOnRef.current || !actxRef.current) return;
     const actx = actxRef.current;
