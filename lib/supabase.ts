@@ -60,6 +60,7 @@ export type Lead = {
   lon: number | null;
   cidade: string | null;
   notas: string | null;
+  ultimo_contato_em?: string | null;
   criado_em: string;
   atualizado_em: string;
 };

@@ -55,6 +55,16 @@ create index if not exists leads_cidade_idx on leads (cidade);
 -- Migração Sprint 4 (CRM): anotações por lead. Rode esta linha.
 alter table leads add column if not exists notas text;
 
+-- Migração Sprint 1 (integridade comercial): data separada de contato.
+-- atualizado_em pode mudar por nova varredura; ultimo_contato_em só muda
+-- quando o operador marca contato ou resposta.
+alter table leads add column if not exists ultimo_contato_em timestamptz;
+update leads
+  set ultimo_contato_em = atualizado_em
+  where ultimo_contato_em is null
+    and status in ('contatado', 'respondeu');
+create index if not exists leads_ultimo_contato_idx on leads (ultimo_contato_em);
+
 -- ============================================================
 -- Migração Sprint 2 (multiusuário) — RODE SOMENTE quando for ativar o
 -- login (junto com as envs NEXT_PUBLIC_*, ver GUIA-ATIVACAO-AUTH.md).
@@ -82,7 +92,13 @@ create table if not exists perfis (
 --   set user_id = (select id from auth.users where email = 'SEU_EMAIL')
 --   where user_id is null;
 
--- RLS fica desligado de propósito: esta é uma ferramenta de uso pessoal,
--- e todo acesso passa pelas API routes do Next.js usando a service_role
--- key (nunca exposta ao navegador). Se um dia isso virar multiusuário,
--- ligue RLS e adicione policies antes de expor a anon key no cliente.
+-- ============================================================
+-- Sprint 0 — bloqueio de acesso direto ao banco
+-- As API routes usam a service_role somente no servidor e continuam
+-- funcionando. anon/authenticated não têm acesso até a Sprint 4, quando
+-- serão criadas policies por operador antes de expor o modo multiusuário.
+-- ============================================================
+alter table leads enable row level security;
+alter table perfis enable row level security;
+revoke all on table leads from anon, authenticated;
+revoke all on table perfis from anon, authenticated;

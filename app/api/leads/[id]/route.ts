@@ -26,7 +26,7 @@ export async function PATCH(
   }
 
   // Aceita atualizar status, notas, ou ambos.
-  const patch: { status?: string; notas?: string } = {};
+  const patch: { status?: string; notas?: string; ultimo_contato_em?: string } = {};
   if (body.status !== undefined) {
     if (!STATUS_VALIDOS.includes(body.status as LeadStatus)) {
       return NextResponse.json(
@@ -35,6 +35,9 @@ export async function PATCH(
       );
     }
     patch.status = body.status;
+    if (body.status === "contatado" || body.status === "respondeu") {
+      patch.ultimo_contato_em = new Date().toISOString();
+    }
   }
   if (body.notas !== undefined) {
     patch.notas = body.notas;

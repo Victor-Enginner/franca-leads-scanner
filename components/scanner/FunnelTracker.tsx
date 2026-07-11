@@ -2,7 +2,7 @@
 
 import type { Lead } from "@/lib/supabase";
 
-// Funil: Fila (não contatado / sem interesse) → Contatado → Respondeu.
+// Funil ativo: quem perdeu interesse ou já fechou não volta para a fila.
 export default function FunnelTracker({ leads }: { leads: Lead[] }) {
   let fila = 0;
   let contatado = 0;
@@ -10,7 +10,7 @@ export default function FunnelTracker({ leads }: { leads: Lead[] }) {
   for (const l of leads) {
     if (l.status === "contatado") contatado++;
     else if (l.status === "respondeu") respondeu++;
-    else if (l.status !== "fechado") fila++;
+    else if (l.status === "não contatado") fila++;
   }
 
   const celula =

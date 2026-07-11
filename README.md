@@ -16,6 +16,7 @@ pra entender por quê antes de "melhorar" isso.
 - Three.js (globo 3D da interface "NEXUS SCAN")
 - Google Places API (legacy: Text Search + Place Details, incl. geometry
   pra plotar os leads no globo)
+- Groq (opcional, para sugestão de mensagens por IA)
 
 ## Rodar agora (modo demo, sem configurar nada)
 
@@ -54,9 +55,17 @@ no localStorage do navegador.
 
 1. Suba o repositório no GitHub.
 2. Importe no [Vercel](https://vercel.com/new).
-3. Configure as mesmas 3 variáveis de ambiente do `.env` no painel do
-   Vercel (Settings → Environment Variables).
-4. Deploy.
+3. Rode a migração `supabase/migrations/20260710_sprint0_lockdown.sql`
+   no SQL Editor do Supabase de produção.
+4. Configure no Vercel as variáveis de servidor necessárias e, antes de
+   publicar, `APP_ACCESS_USERNAME` e `APP_ACCESS_PASSWORD` — a aplicação
+   falha fechada em produção sem essa senha.
+5. Faça deploy e confirme que o navegador pede as credenciais antes de
+   exibir leads ou responder às APIs.
+
+> O modo multiusuário ainda não está pronto para ativação comercial. Não
+> adicione `NEXT_PUBLIC_SUPABASE_*` em produção até a Sprint 4 criar e
+> testar as policies RLS por operador.
 
 ## Uso
 

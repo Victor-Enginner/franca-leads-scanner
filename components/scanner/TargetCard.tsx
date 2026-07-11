@@ -148,7 +148,7 @@ export default function TargetCard({
               onToggleDone(lead);
             }}
           >
-            ✓ feito
+              {done ? "✓ reabrir" : "✓ fechar lead"}
           </button>
         </div>
       </div>

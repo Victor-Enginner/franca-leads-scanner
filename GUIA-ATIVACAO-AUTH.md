@@ -1,4 +1,10 @@
-# Guia: ativar o modo multiusuário (login + planos)
+# Guia futuro: ativar o modo multiusuário (login + planos)
+
+> **Não ative este guia durante a Sprint 0.** O banco foi bloqueado com RLS
+> sem policies públicas para proteger a operação interna. A ativação de
+> login, contas de clientes e planos só será segura na Sprint 4, depois de
+> criar e testar policies por operador. Até lá, use apenas
+> `APP_ACCESS_USERNAME` + `APP_ACCESS_PASSWORD` no Vercel.
 
 O código do Sprint 2 fica **dormindo** até você ativar. Enquanto as duas
 variáveis `NEXT_PUBLIC_*` não existirem, o app roda exatamente como

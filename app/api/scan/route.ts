@@ -3,10 +3,11 @@ import {
   getSupabaseServerClient,
   supabaseConfigurado,
 } from "@/lib/supabase";
-import { buscarNicho, detalhesDoLugar } from "@/lib/places";
+import { buscarNicho, detalhesDoLugar, negocioEncerrado } from "@/lib/places";
 import { scoreOportunidade, gerarMensagem } from "@/lib/scoring";
 import { authConfigurado, getUsuario } from "@/lib/auth";
 import { getOuCriarPerfil, consumirVarredura } from "@/lib/perfil";
+import { consumeRateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 60; // varredura pode levar um tempinho
 
@@ -16,6 +17,18 @@ type ScanBody = {
   maxPorNicho?: number;
 };
 
+const MAX_NICHOS = 12;
+const MAX_CHARS_NICHO = 80;
+const MAX_CHARS_CIDADE = 100;
+const MAX_POR_NICHO = 20;
+const MAX_VARREDURAS_POR_HORA = 5;
+const JANELA_VARREDURA_MS = 60 * 60 * 1000;
+
+function clientKey(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  return forwarded?.split(",")[0]?.trim() || "unknown";
+}
+
 export async function POST(req: NextRequest) {
   let body: ScanBody;
   try {
@@ -24,16 +37,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
-  const nichos = body.nichos?.filter(Boolean);
-  if (!nichos || nichos.length === 0) {
+  if (!Array.isArray(body.nichos)) {
     return NextResponse.json(
-      { error: "Envie ao menos um nicho em `nichos`" },
+      { error: "Envie `nichos` como uma lista de texto" },
       { status: 400 }
     );
   }
 
-  const cidade = body.cidade ?? "Franca, SP";
-  const maxPorNicho = body.maxPorNicho ?? 20;
+  const nichos = [...new Set(
+    body.nichos
+      .filter((n): n is string => typeof n === "string")
+      .map((n) => n.trim())
+      .filter(Boolean)
+  )];
+  if (
+    nichos.length === 0 ||
+    nichos.length > MAX_NICHOS ||
+    nichos.some((n) => n.length > MAX_CHARS_NICHO)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Envie entre 1 e ${MAX_NICHOS} nichos, com até ${MAX_CHARS_NICHO} caracteres cada.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (body.cidade !== undefined && typeof body.cidade !== "string") {
+    return NextResponse.json({ error: "cidade precisa ser texto" }, { status: 400 });
+  }
+  const cidade = (body.cidade ?? "Franca, SP").trim();
+  if (!cidade || cidade.length > MAX_CHARS_CIDADE) {
+    return NextResponse.json(
+      { error: `cidade precisa ter até ${MAX_CHARS_CIDADE} caracteres` },
+      { status: 400 }
+    );
+  }
+
+  if (
+    body.maxPorNicho !== undefined &&
+    (!Number.isInteger(body.maxPorNicho) ||
+      body.maxPorNicho < 1 ||
+      body.maxPorNicho > MAX_POR_NICHO)
+  ) {
+    return NextResponse.json(
+      { error: `maxPorNicho precisa ser um inteiro entre 1 e ${MAX_POR_NICHO}` },
+      { status: 400 }
+    );
+  }
+  const maxPorNicho = body.maxPorNicho ?? MAX_POR_NICHO;
 
   if (!supabaseConfigurado()) {
     return NextResponse.json(
@@ -43,6 +96,24 @@ export async function POST(req: NextRequest) {
           "varreduras reais.",
       },
       { status: 400 }
+    );
+  }
+
+  const rateLimit = consumeRateLimit(
+    `scan:${clientKey(req)}`,
+    MAX_VARREDURAS_POR_HORA,
+    JANELA_VARREDURA_MS
+  );
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error:
+          "Limite temporário de varreduras atingido. Tente novamente mais tarde.",
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      }
     );
   }
 
@@ -69,7 +140,12 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabaseServerClient();
-  const resumo: { nicho: string; encontrados: number; salvos: number }[] = [];
+  const resumo: {
+    nicho: string;
+    encontrados: number;
+    salvos: number;
+    ignorados: number;
+  }[] = [];
   const erros: string[] = [];
 
   // Erros do Supabase são objetos planos — String() vira "[object Object]".
@@ -86,12 +162,17 @@ export async function POST(req: NextRequest) {
     try {
       const resultados = await buscarNicho(nicho, cidade, maxPorNicho);
       let salvos = 0;
+      let ignorados = 0;
 
       for (const r of resultados) {
         try {
           const detalhes = await detalhesDoLugar(r.place_id);
+          if (negocioEncerrado(detalhes.business_status)) {
+            ignorados += 1;
+            continue;
+          }
           const { score, motivo } = scoreOportunidade(detalhes);
-          const mensagem = gerarMensagem(detalhes, motivo);
+          const mensagem = gerarMensagem(detalhes, motivo, cidade);
 
           const { error } = await supabase.from("leads").upsert(
             {
@@ -131,7 +212,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      resumo.push({ nicho, encontrados: resultados.length, salvos });
+      resumo.push({ nicho, encontrados: resultados.length, salvos, ignorados });
     } catch (nichoErr) {
       erros.push(`Falha ao buscar nicho "${nicho}": ${descreverErro(nichoErr)}`);
     }

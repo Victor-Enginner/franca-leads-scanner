@@ -4,23 +4,23 @@ export type Motivo = "sem_site" | "so_rede_social" | "poucas_reviews" | "geral";
 
 const MENSAGENS: Record<Motivo, string> = {
   sem_site:
-    "Oi! Vi o {nome} aqui em Franca — {qtd_reviews} avaliações, nota {rating}, " +
+    "Oi! Vi o {nome} em {cidade} — {qtd_reviews} avaliações, nota {rating}, " +
     "mas sem site próprio ainda. Isso é cliente indo pra concorrência que " +
     "aparece primeiro no Google. Faço sites simples e rápidos, com automação " +
     "de WhatsApp incluída. Posso te mostrar um exemplo de como ficaria o de " +
     "vocês, sem compromisso?",
   so_rede_social:
-    "Oi! Vi o {nome} — {qtd_reviews} avaliações, nota {rating}, mas o único " +
+    "Oi! Vi o {nome} em {cidade} — {qtd_reviews} avaliações, nota {rating}, mas o único " +
     "link que aparece no Google é o Instagram. Um site próprio (mesmo " +
     "simples) ajuda a converter muito mais quem já gostou do trabalho de " +
     "vocês. Posso te mandar uma ideia rápida?",
   poucas_reviews:
-    "Oi! Vi o {nome} aqui em Franca, ótima nota ({rating}⭐) mas pouca gente " +
+    "Oi! Vi o {nome} em {cidade}, ótima nota ({rating}⭐) mas pouca gente " +
     "avaliando ainda — isso é oportunidade perdida no Google. Ajudo " +
     "negócios locais a aparecer mais e converter mais avaliação em cliente " +
     "novo. Topa ver uma ideia rápida?",
   geral:
-    "Oi! Vi o {nome} aqui em Franca. Ajudo negócios locais a vender mais " +
+    "Oi! Vi o {nome} em {cidade}. Ajudo negócios locais a vender mais " +
     "com automação de WhatsApp, Instagram e presença digital — posso te " +
     "mandar um exemplo rápido do que consigo fazer pro seu ramo?",
 };
@@ -67,9 +67,14 @@ export function scoreOportunidade(place: PlaceDetails): {
   return { score: Math.min(score, 100), motivo };
 }
 
-export function gerarMensagem(place: PlaceDetails, motivo: Motivo): string {
+export function gerarMensagem(
+  place: PlaceDetails,
+  motivo: Motivo,
+  cidade = "sua cidade"
+): string {
   return MENSAGENS[motivo]
     .replaceAll("{nome}", place.name ?? "")
     .replaceAll("{rating}", String(place.rating ?? "-"))
-    .replaceAll("{qtd_reviews}", String(place.user_ratings_total ?? "-"));
+    .replaceAll("{qtd_reviews}", String(place.user_ratings_total ?? "-"))
+    .replaceAll("{cidade}", cidade);
 }

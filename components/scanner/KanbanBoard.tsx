@@ -18,8 +18,10 @@ const BORDA: Record<string, string> = {
   low: "border-l-text-dim",
 };
 
-function diasDesde(iso: string): number {
+function diasDesde(iso: string | null | undefined): number | null {
+  if (!iso) return null;
   const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms)) return null;
   return Math.floor(ms / 86_400_000);
 }
 
@@ -84,9 +86,9 @@ export default function KanbanBoard({
               )}
               {doStatus.map((lead) => {
                 const cls = scoreClass(lead.score_oportunidade);
-                const dias = diasDesde(lead.atualizado_em);
+                const dias = diasDesde(lead.ultimo_contato_em);
                 const parado =
-                  lead.status === "contatado" && dias >= 3;
+                  lead.status === "contatado" && dias !== null && dias >= 3;
                 const wa = waHref(lead);
                 const emEdicao = editando === lead.id;
                 return (

@@ -18,6 +18,10 @@ export type PlaceDetails = {
   };
 };
 
+export function negocioEncerrado(status?: string): boolean {
+  return status === "CLOSED_PERMANENTLY" || status === "CLOSED_TEMPORARILY";
+}
+
 function apiKey(): string {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) {

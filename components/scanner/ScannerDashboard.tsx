@@ -379,9 +379,16 @@ export default function ScannerDashboard({
 
   // Muda status: PATCH no backend real; localStorage no modo demo.
   async function mudarStatus(lead: Lead, status: LeadStatus) {
-    const anterior = lead.status;
+    const atualizacaoContato =
+      status === "contatado" || status === "respondeu"
+        ? new Date().toISOString()
+        : undefined;
     setLeads((atual) =>
-      atual.map((l) => (l.id === lead.id ? { ...l, status } : l))
+      atual.map((l) =>
+        l.id === lead.id
+          ? { ...l, status, ...(atualizacaoContato ? { ultimo_contato_em: atualizacaoContato } : {}) }
+          : l
+      )
     );
     if (demo) {
       salvarStatusDemo(lead.id, status);
@@ -396,7 +403,7 @@ export default function ScannerDashboard({
       if (!resp.ok) throw new Error();
     } catch {
       setLeads((atual) =>
-        atual.map((l) => (l.id === lead.id ? { ...l, status: anterior } : l))
+        atual.map((l) => (l.id === lead.id ? lead : l))
       );
       showToast("ERRO AO SALVAR STATUS");
     }
@@ -458,7 +465,7 @@ export default function ScannerDashboard({
   function handleToggleDone(lead: Lead) {
     const fechado = lead.status === "fechado";
     mudarStatus(lead, fechado ? "não contatado" : "fechado");
-    showToast(fechado ? "REABERTO" : "MARCADO COMO FEITO ✓");
+    showToast(fechado ? "LEAD REABERTO" : "LEAD MARCADO COMO FECHADO ✓");
     beep(fechado ? 400 : 720, 0.08);
   }
 
