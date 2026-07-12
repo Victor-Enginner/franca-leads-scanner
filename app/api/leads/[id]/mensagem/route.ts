@@ -64,9 +64,12 @@ export async function POST(
 
     return NextResponse.json({ mensagem, site });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
-      { status: 500 }
-    );
+    // A abordagem manual nunca pode parar por indisponibilidade da IA.
+    // Mantém o template determinístico já salvo e informa o fallback.
+    return NextResponse.json({
+      mensagem: lead.mensagem_sugerida,
+      fallback: true,
+      aviso: "IA indisponível; mantendo mensagem revisável existente.",
+    });
   }
 }

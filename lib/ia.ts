@@ -39,7 +39,9 @@ function contexto(lead: Lead, site: SiteInfo): string {
   } else if (site.noAr === false) {
     linhas.push("Situação digital: TEM site, mas ele está FORA DO AR / não carrega — gancho forte.");
   } else {
-    linhas.push("Situação digital: tem site próprio funcionando; foque em automação/conversão.");
+    linhas.push(site.bloqueado
+      ? "Situação digital: site não foi analisado por segurança; não faça alegações sobre disponibilidade."
+      : "Situação digital: tem site próprio funcionando; foque em automação/conversão.");
   }
   return linhas.join("\n");
 }
@@ -48,6 +50,8 @@ export async function gerarMensagemIA(
   lead: Lead,
   site: SiteInfo
 ): Promise<string> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
   const resp = await fetch(GROQ_URL, {
     method: "POST",
     headers: {
@@ -66,7 +70,9 @@ export async function gerarMensagemIA(
         },
       ],
     }),
+    signal: ctrl.signal,
   });
+  clearTimeout(timer);
 
   if (!resp.ok) {
     const detalhe = await resp.text().catch(() => "");
