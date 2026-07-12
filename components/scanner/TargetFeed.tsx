@@ -76,8 +76,8 @@ export default function TargetFeed({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="border-b border-grid px-5 pb-2.5 pt-4">
-        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
-          <span className="text-cyan">▸</span> Feed de alvos
+        <div className="flex items-center gap-2 font-body text-sm font-semibold text-text-primary">
+          Leads prontos para abordar
           <span className="ml-auto font-mono text-[9px] tracking-wide text-text-dim">
             {visiveis.length}/{leads.length}
           </span>
@@ -88,7 +88,7 @@ export default function TargetFeed({
             <button
               key={f.key}
               onClick={() => onFilterChange(f.key)}
-              className={`flex-1 rounded-sm border px-1 py-1.5 font-mono text-[9px] uppercase tracking-wide transition-colors ${
+            className={`min-h-11 flex-1 rounded-sm border px-2 py-2 font-body text-xs font-medium transition-colors ${
                 filter === f.key
                   ? "border-cyan bg-cyan/10 text-cyan"
                   : "border-grid bg-void-2 text-text-dim hover:border-cyan-dim hover:text-cyan"
@@ -102,7 +102,7 @@ export default function TargetFeed({
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           placeholder="⌕ buscar alvo por nome..."
-          className="mt-1.5 w-full rounded-sm border border-grid bg-void-2 px-2.5 py-1.5 font-body text-xs text-text-primary outline-none transition-colors placeholder:text-text-dim focus:border-cyan"
+          className="mt-2 min-h-11 w-full rounded-sm border border-grid bg-void-2 px-3 py-2 font-body text-sm text-text-primary outline-none transition-colors placeholder:text-text-dim focus:border-cyan"
         />
         <div className="mt-1.5 flex gap-1.5">
           <select

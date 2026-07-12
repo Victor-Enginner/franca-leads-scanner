@@ -8,23 +8,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        void: "#04070a",
-        "void-2": "#070d14",
-        panel: "#0a141e",
-        grid: "#0e2436",
-        cyan: "#00f0ff",
-        "cyan-dim": "#0a8a95",
-        magenta: "#ff2e97",
-        amber: "#ffb800",
-        lime: "#7dff5c",
-        "text-primary": "#cfeef5",
-        "text-dim": "#4a6f7d",
-        danger: "#ff3b5c",
+        void: "#090909",
+        "void-2": "#111111",
+        panel: "#171717",
+        grid: "#2a2a2a",
+        cyan: "#f5f5f5",
+        "cyan-dim": "#a3a3a3",
+        magenta: "#d4d4d4",
+        amber: "#e5e5e5",
+        lime: "#d4d4d4",
+        "text-primary": "#fafafa",
+        "text-dim": "#a3a3a3",
+        danger: "#d4d4d4",
       },
       fontFamily: {
-        display: ["var(--font-orbitron)", "sans-serif"],
-        body: ["var(--font-rajdhani)", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "monospace"],
+        display: ["Arial", "sans-serif"],
+        body: ["Arial", "sans-serif"],
+        mono: ["ui-monospace", "monospace"],
       },
       keyframes: {
         blink: {

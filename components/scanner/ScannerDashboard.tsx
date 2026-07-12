@@ -542,11 +542,11 @@ export default function ScannerDashboard({
             <line x1="32" y1="20" x2="38" y2="20" stroke="#00f0ff" strokeWidth="1.5" />
           </svg>
           <div>
-            <h1 className="font-display text-lg font-black leading-none tracking-[3px] text-cyan [text-shadow:0_0_12px_rgba(0,240,255,0.5)]">
+            <h1 className="font-body text-lg font-bold leading-none tracking-tight text-text-primary">
               NEXUS SCAN
             </h1>
-            <span className="font-mono text-[10px] uppercase tracking-[4px] text-text-dim">
-              engenheiro.ai · recon grid
+            <span className="font-mono text-[10px] tracking-wide text-text-dim">
+              Prospecção local
             </span>
           </div>
         </div>
@@ -574,7 +574,7 @@ export default function ScannerDashboard({
                     : "bg-void-2 text-text-dim hover:text-cyan"
                 }`}
               >
-                {v === "radar" ? "◈ radar" : "▤ funil"}
+                {v === "radar" ? "Leads" : "Funil"}
               </button>
             ))}
           </div>
@@ -582,7 +582,7 @@ export default function ScannerDashboard({
             onClick={abrirHistorico}
             className="hidden rounded-sm border border-grid bg-void-2 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] text-text-dim transition-colors hover:border-cyan hover:text-cyan lg:block"
           >
-            histórico
+            Histórico
           </button>
           <div className="hidden items-center gap-2 rounded-sm border border-cyan-dim bg-cyan/5 px-3.5 py-1.5 font-mono text-[11px] tracking-[2px] text-cyan lg:flex">
             <span className="h-[7px] w-[7px] animate-blink rounded-full bg-lime shadow-[0_0_8px_#7dff5c]" />
@@ -610,14 +610,14 @@ export default function ScannerDashboard({
       {/* Palco: rail esquerdo + área de trabalho (radar OU funil) */}
       <div className="relative grid h-auto lg:h-[calc(100vh-73px)] lg:grid-cols-[300px_1fr]">
         {/* Rail esquerdo */}
-        <div className="flex flex-col gap-4 overflow-y-auto border-b border-grid bg-gradient-to-r from-panel/60 to-transparent p-5 lg:border-b-0 lg:border-r">
+        <div className="flex flex-col gap-5 overflow-y-auto border-b border-grid bg-panel p-5 lg:border-b-0 lg:border-r">
           <div>
             <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
-              <span className="text-cyan">▸</span> Parâmetros de varredura
+              Configurar varredura
               <span className="h-px flex-1 bg-grid" />
             </div>
             <label className="mb-1.5 block font-mono text-[9px] uppercase tracking-[2px] text-text-dim">
-              Vetores de busca (nichos)
+              Nichos (separe por vírgula)
             </label>
             <textarea
               value={nichosTexto}
@@ -625,7 +625,7 @@ export default function ScannerDashboard({
               className="min-h-[70px] w-full resize-y rounded-sm border border-grid bg-void-2 p-2.5 font-body text-sm font-medium text-text-primary outline-none transition-shadow focus:border-cyan focus:shadow-[0_0_0_1px_#00f0ff,0_0_16px_rgba(0,240,255,0.2)]"
             />
             <label className="mb-1.5 mt-3 block font-mono text-[9px] uppercase tracking-[2px] text-text-dim">
-              Setor de varredura (cidade)
+              Cidade
             </label>
             <input
               value={cidadeTexto}
@@ -639,27 +639,25 @@ export default function ScannerDashboard({
 
           <div>
             <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
-              <span className="text-cyan">▸</span> Coordenadas de alvo
+              Resumo da cidade
               <span className="h-px flex-1 bg-grid" />
             </div>
             <div className="border border-grid bg-void-2 p-3 font-mono text-[11px] leading-loose text-text-dim">
-              <div><span className="text-cyan-dim">SETOR ::</span> <span className="text-text-primary">{setor.nome}</span></div>
-              <div><span className="text-cyan-dim">LAT ::</span> <span className="text-text-primary">{setor.lat.toFixed(4)}°</span></div>
-              <div><span className="text-cyan-dim">LON ::</span> <span className="text-text-primary">{setor.lon.toFixed(4)}°</span></div>
-              <div><span className="text-cyan-dim">RAIO ::</span> <span className="text-text-primary">12.0 km</span></div>
+              <div><span className="text-text-dim">Cidade</span> <span className="text-text-primary">{setor.nome}</span></div>
+              <div><span className="text-text-dim">Raio de referência</span> <span className="text-text-primary">12 km</span></div>
             </div>
           </div>
 
           <button
             onClick={startScan}
             disabled={scanning}
-            className="relative mt-1 w-full overflow-hidden border border-cyan bg-gradient-to-br from-cyan/10 to-magenta/10 p-4 font-display text-sm font-bold uppercase tracking-[3px] text-cyan transition-all [text-shadow:0_0_8px_rgba(0,240,255,0.6)] hover:-translate-y-px hover:from-cyan/25 hover:to-magenta/15 hover:shadow-[0_0_24px_rgba(0,240,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="relative mt-1 min-h-11 w-full overflow-hidden rounded-sm bg-text-primary px-4 py-3 font-body text-sm font-semibold text-void transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {scanning && (
               <span className="absolute left-[-100%] top-0 h-full w-3/5 animate-btnsweep bg-gradient-to-r from-transparent via-cyan/40 to-transparent" />
             )}
             <span className="relative">
-              ◈ {hasScannedRef.current ? "NOVA VARREDURA" : "INICIAR VARREDURA"}
+              {hasScannedRef.current ? "Nova varredura" : "Iniciar varredura"}
             </span>
           </button>
 
@@ -688,19 +686,12 @@ export default function ScannerDashboard({
 
           <div>
             <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
-              <span className="text-cyan">▸</span> Funil de vendas
+              Funil comercial
               <span className="h-px flex-1 bg-grid" />
             </div>
             <FunnelTracker leads={leads} />
           </div>
 
-          <div>
-            <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
-              <span className="text-cyan">▸</span> Log do sistema
-              <span className="h-px flex-1 bg-grid" />
-            </div>
-            <SystemLog lines={logs} />
-          </div>
         </div>
 
         {/* Área de trabalho: alterna entre radar (globo+feed) e funil (kanban).
@@ -708,12 +699,12 @@ export default function ScannerDashboard({
             contexto WebGL. */}
         <div className="relative lg:min-h-0 lg:overflow-hidden">
         <div
-          className={`grid h-full grid-rows-[380px_auto] lg:grid-rows-1 lg:grid-cols-[1fr_360px] ${
+          className={`grid h-full grid-rows-[220px_auto] lg:grid-rows-1 lg:grid-cols-[280px_1fr] ${
             vista === "funil" ? "hidden" : ""
           }`}
         >
         {/* Palco do globo */}
-        <div className="relative min-h-[380px] overflow-hidden bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(0,240,255,0.04),transparent)]">
+        <div className="relative min-h-[220px] overflow-hidden border-b border-grid bg-void-2 lg:min-h-0 lg:border-b-0 lg:border-r">
           <Globe ref={globeRef} />
           <ScanSequence
             phase={phase}
@@ -735,7 +726,7 @@ export default function ScannerDashboard({
             OBRIGATÓRIOS: sem eles, centenas de cards esticam a linha do
             grid (e o palco do globo junto) pra dezenas de milhares de px —
             o canvas vira uma "parede" e só uma fatia aparece na tela. */}
-        <div className="border-t border-grid bg-gradient-to-l from-panel/60 to-transparent lg:min-h-0 lg:overflow-hidden lg:border-l lg:border-t-0">
+        <div className="bg-void lg:min-h-0 lg:overflow-hidden">
           <TargetFeed
             leads={feedLeads}
             filter={filter}

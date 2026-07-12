@@ -4,7 +4,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #0a8a95 #04070a;
+  scrollbar-color: #737373 #090909;
 }
 
 html,
@@ -14,44 +14,11 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 240, 255, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(255, 46, 151, 0.06), transparent),
-    #04070a;
-}
-
-/* Scanlines + vinheta do protótipo */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  mix-blend-mode: overlay;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent 0px,
-    transparent 2px,
-    rgba(0, 240, 255, 0.015) 3px,
-    rgba(0, 240, 255, 0.015) 4px
-  );
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 100% 100% at 50% 50%,
-    transparent 55%,
-    rgba(0, 0, 0, 0.55) 100%
-  );
+  background: #090909;
 }
 
 :focus-visible {
-  outline: 2px solid #00f0ff;
+  outline: 2px solid #f5f5f5;
   outline-offset: 2px;
 }
 
