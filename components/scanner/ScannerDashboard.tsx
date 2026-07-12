@@ -17,6 +17,15 @@ const NICHOS_PADRAO =
   "salão de unhas, barbearia, hamburgueria, academia, estética facial, pet shop";
 
 type Setor = { nome: string; lat: number; lon: number };
+type JornadaResumo = {
+  id: string;
+  cidade: string;
+  iniciada_em: string;
+  expira_em: string;
+  encerrada_em: string | null;
+  origem: "operacao" | "legado";
+  varreduras?: { id: string; encontrados: number; salvos: number; ignorados: number; estado: string }[];
+};
 
 const SETOR_PADRAO: Setor = {
   nome: "Franca, São Paulo",
@@ -51,11 +60,13 @@ export default function ScannerDashboard({
   demo = false,
   usuarioEmail = null,
   iaAtiva = false,
+  erroInicial = null,
 }: {
   leadsIniciais: Lead[];
   demo?: boolean;
   usuarioEmail?: string | null;
   iaAtiva?: boolean;
+  erroInicial?: string | null;
 }) {
   const ordenados = [...leadsIniciais].sort(
     (a, b) => b.score_oportunidade - a.score_oportunidade
@@ -85,6 +96,9 @@ export default function ScannerDashboard({
     varreduras_limite: number;
     varreduras_usadas: number;
   } | null>(null);
+  const [historicoAberto, setHistoricoAberto] = useState(false);
+  const [historico, setHistorico] = useState<JornadaResumo[]>([]);
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   const [logs, setLogs] = useState<LogLine[]>([
     { id: 1, t: "00:00", txt: "núcleo iniciado", cls: "ok" },
     { id: 2, t: "00:01", txt: "uplink orbital", cls: "ok" },
@@ -206,6 +220,39 @@ export default function ScannerDashboard({
     setToast(msg);
     if (toastTmRef.current) clearTimeout(toastTmRef.current);
     toastTmRef.current = setTimeout(() => setToast(""), 1800);
+  }
+
+  async function abrirHistorico() {
+    setHistoricoAberto(true);
+    setCarregandoHistorico(true);
+    try {
+      const resposta = await fetch("/api/jornadas");
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.error ?? "Falha ao carregar histórico");
+      setHistorico(dados.jornadas ?? []);
+    } catch {
+      showToast("FALHA AO CARREGAR HISTÓRICO");
+    } finally {
+      setCarregandoHistorico(false);
+    }
+  }
+
+  async function abrirJornada(id: string) {
+    try {
+      const resposta = await fetch(`/api/leads?jornada=${encodeURIComponent(id)}`);
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.error ?? "Falha ao carregar jornada");
+      const jornadaLeads = (dados.leads ?? []) as Lead[];
+      const ordenadosJornada = [...jornadaLeads].sort(
+        (a, b) => b.score_oportunidade - a.score_oportunidade
+      );
+      setLeads(ordenadosJornada);
+      setFeedIds(ordenadosJornada.map((lead) => lead.id));
+      setHistoricoAberto(false);
+      showToast(`${ordenadosJornada.length} LEADS DA JORNADA CARREGADOS`);
+    } catch {
+      showToast("FALHA AO ABRIR JORNADA");
+    }
   }
 
   function setPhase2(t: string, s = "") {
@@ -477,6 +524,11 @@ export default function ScannerDashboard({
 
   return (
     <main className="min-h-screen">
+      {erroInicial && (
+        <div role="alert" className="border-b border-amber bg-amber/10 px-5 py-2 text-center font-mono text-[10px] tracking-[2px] text-amber">
+          {erroInicial}
+        </div>
+      )}
       {/* HUD superior */}
       <div className="relative z-10 flex items-center justify-between border-b border-grid bg-gradient-to-b from-panel/90 to-panel/30 px-7 py-4 backdrop-blur-md">
         <div className="flex items-center gap-3.5">
@@ -526,6 +578,12 @@ export default function ScannerDashboard({
               </button>
             ))}
           </div>
+          <button
+            onClick={abrirHistorico}
+            className="hidden rounded-sm border border-grid bg-void-2 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[2px] text-text-dim transition-colors hover:border-cyan hover:text-cyan lg:block"
+          >
+            histórico
+          </button>
           <div className="hidden items-center gap-2 rounded-sm border border-cyan-dim bg-cyan/5 px-3.5 py-1.5 font-mono text-[11px] tracking-[2px] text-cyan lg:flex">
             <span className="h-[7px] w-[7px] animate-blink rounded-full bg-lime shadow-[0_0_8px_#7dff5c]" />
             {sysStatus}
@@ -743,6 +801,41 @@ export default function ScannerDashboard({
       >
         {toast}
       </div>
+      {historicoAberto && (
+        <div className="fixed inset-0 z-[9999] grid place-items-center bg-void/80 p-4 backdrop-blur-sm">
+          <section role="dialog" aria-modal="true" aria-label="Histórico de jornadas" className="max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-sm border border-cyan-dim bg-panel p-5 shadow-[0_0_40px_rgba(0,240,255,0.12)]">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-[3px] text-cyan">Histórico de jornadas</div>
+                <div className="mt-1 font-body text-xs text-text-dim">Selecione uma jornada para revisar seus leads.</div>
+              </div>
+              <button onClick={() => setHistoricoAberto(false)} className="rounded-sm border border-grid px-2 py-1 font-mono text-[10px] text-text-dim hover:border-danger hover:text-danger">fechar</button>
+            </div>
+            {carregandoHistorico ? (
+              <div className="py-8 text-center font-mono text-[10px] tracking-[2px] text-text-dim">CARREGANDO HISTÓRICO...</div>
+            ) : historico.length === 0 ? (
+              <div className="py-8 text-center font-mono text-[10px] tracking-[2px] text-text-dim">NENHUMA JORNADA REGISTRADA</div>
+            ) : (
+              <div className="space-y-2">
+                {historico.map((jornada) => {
+                  const total = (jornada.varreduras ?? []).reduce((soma, item) => soma + item.salvos, 0);
+                  return (
+                    <button key={jornada.id} onClick={() => abrirJornada(jornada.id)} className="w-full rounded-sm border border-grid bg-void-2 p-3 text-left transition-colors hover:border-cyan hover:bg-cyan/5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-body text-sm font-semibold text-text-primary">{jornada.origem === "legado" ? "Base histórica importada" : jornada.cidade}</span>
+                        <span className="font-mono text-[10px] text-lime">{total} alvos</span>
+                      </div>
+                      <div className="mt-1 font-mono text-[9px] uppercase tracking-wide text-text-dim">
+                        {new Date(jornada.iniciada_em).toLocaleString("pt-BR")} · {(jornada.varreduras ?? []).length} varredura(s)
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }

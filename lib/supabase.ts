@@ -61,6 +61,9 @@ export type Lead = {
   cidade: string | null;
   notas: string | null;
   ultimo_contato_em?: string | null;
+  proxima_acao_em?: string | null;
+  motivo_perda?: string | null;
+  origem?: string | null;
   criado_em: string;
   atualizado_em: string;
 };

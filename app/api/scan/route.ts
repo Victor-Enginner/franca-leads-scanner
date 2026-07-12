@@ -8,6 +8,13 @@ import { scoreOportunidade, gerarMensagem } from "@/lib/scoring";
 import { authConfigurado, getUsuario } from "@/lib/auth";
 import { getOuCriarPerfil, consumirVarredura } from "@/lib/perfil";
 import { consumeRateLimit } from "@/lib/rate-limit";
+import {
+  concluirVarredura,
+  criarVarredura,
+  obterOuCriarJornadaAtiva,
+  vincularLeadAVarredura,
+} from "@/lib/jornadas";
+import type { Lead } from "@/lib/supabase";
 
 export const maxDuration = 60; // varredura pode levar um tempinho
 
@@ -140,6 +147,23 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabaseServerClient();
+  let jornada: { id: string };
+  let varredura: { id: string };
+  try {
+    jornada = await obterOuCriarJornadaAtiva(supabase, cidade, userId);
+    varredura = await criarVarredura(
+      supabase,
+      jornada.id,
+      cidade,
+      nichos,
+      maxPorNicho
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Não foi possível iniciar a jornada de trabalho." },
+      { status: 500 }
+    );
+  }
   const resumo: {
     nicho: string;
     encontrados: number;
@@ -174,7 +198,7 @@ export async function POST(req: NextRequest) {
           const { score, motivo } = scoreOportunidade(detalhes);
           const mensagem = gerarMensagem(detalhes, motivo, cidade);
 
-          const { error } = await supabase.from("leads").upsert(
+          const { data: leadSalvo, error } = await supabase.from("leads").upsert(
             {
               place_id: detalhes.place_id,
               nicho,
@@ -198,9 +222,14 @@ export async function POST(req: NextRequest) {
               onConflict: userId ? "user_id,place_id" : "place_id",
               ignoreDuplicates: false,
             }
-          );
+          ).select("*").single();
 
           if (error) throw error;
+          if (!leadSalvo) throw new Error("Lead não retornado após salvar");
+          await vincularLeadAVarredura(supabase, {
+            varreduraId: varredura.id,
+            lead: leadSalvo as Lead,
+          });
           salvos += 1;
 
           // respeita rate limit da Places API
@@ -218,7 +247,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const totais = resumo.reduce(
+    (acc, item) => ({
+      encontrados: acc.encontrados + item.encontrados,
+      salvos: acc.salvos + item.salvos,
+      ignorados: acc.ignorados + item.ignorados,
+    }),
+    { encontrados: 0, salvos: 0, ignorados: 0 }
+  );
+  try {
+    await concluirVarredura(supabase, varredura.id, totais, erros);
+  } catch (error) {
+    erros.push(`Falha ao concluir histórico da varredura: ${descreverErro(error)}`);
+  }
+
   if (userId) await consumirVarredura(userId);
 
-  return NextResponse.json({ resumo, erros });
+  return NextResponse.json({ resumo, erros, jornadaId: jornada.id, varreduraId: varredura.id });
 }

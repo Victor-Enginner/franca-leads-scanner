@@ -1,7 +1,10 @@
 import type { Lead } from "@/lib/supabase";
 
 function csvCampo(v: unknown): string {
-  const s = v == null ? "" : String(v);
+  const original = v == null ? "" : String(v);
+  // Excel/Sheets interpretam =, +, - e @ como fórmula. Dados de empresas
+  // são externos, portanto neutralizamos esse comportamento na exportação.
+  const s = /^[=+\-@]/.test(original) ? `'${original}` : original;
   return `"${s.replace(/"/g, '""')}"`;
 }
 
