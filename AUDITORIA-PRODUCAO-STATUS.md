@@ -15,7 +15,7 @@ evidência de uso real.
 
 | Achado original | Situação | Evidência atual |
 | --- | --- | --- |
-| Leads reais expostos sem login | Resolvido | Middleware de acesso no deploy; rotas públicas sem credencial recebem `401`. |
+| Leads reais expostos sem login | Risco aceito pelo responsável | O painel e as rotas do app são públicos por decisão de produto. RLS segue bloqueando acesso direto ao banco e a varredura mantém limite por IP. |
 | RLS desativado | Resolvido | Migration aplicada. `leads` tem RLS ativo e `anon`/`authenticated` não possuem leitura direta. |
 | Varredura sem limite de abuso | Resolvido como contenção inicial | Validação de payload e rate limit por IP na rota de varredura. Reavaliar solução persistente apenas se houver multiusuário. |
 | Mensagem dizia "aqui em Franca" para outra cidade | Resolvido | Cidade passou a ser dinâmica nas mensagens novas. |
@@ -59,4 +59,3 @@ Estes itens continuam importantes, mas estão fora da Sprint 1 atual:
 - Manter `SUPABASE_SERVICE_ROLE_KEY` exclusivamente no servidor.
 - Não expor dados ou rotas de varredura a visitantes.
 - Não transformar falha de produção em modo demo silencioso.
-

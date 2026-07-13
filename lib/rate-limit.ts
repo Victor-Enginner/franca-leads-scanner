@@ -12,8 +12,9 @@ const buckets = new Map<string, Bucket>();
 
 /**
  * Limite em memória para conter custo acidental da Places API.
- * O bloqueio principal é o middleware; em Sprint 5 este limitador deve ir
- * para armazenamento compartilhado antes de haver múltiplas instâncias.
+ * Enquanto o painel é público, este é o limite inicial de uso da varredura.
+ * Em Sprint 5 ele deve ir para armazenamento compartilhado antes de haver
+ * múltiplas instâncias.
  */
 export function consumeRateLimit(
   key: string,

@@ -57,11 +57,9 @@ no localStorage do navegador.
 2. Importe no [Vercel](https://vercel.com/new).
 3. Rode a migração `supabase/migrations/20260710_sprint0_lockdown.sql`
    no SQL Editor do Supabase de produção.
-4. Configure no Vercel as variáveis de servidor necessárias e, antes de
-   publicar, `APP_ACCESS_USERNAME` e `APP_ACCESS_PASSWORD` — a aplicação
-   falha fechada em produção sem essa senha.
-5. Faça deploy e confirme que o navegador pede as credenciais antes de
-   exibir leads ou responder às APIs.
+4. Configure no Vercel as variáveis de servidor necessárias.
+5. Faça deploy. O painel é acessível a qualquer pessoa com o link; as chaves
+   de servidor continuam protegidas e o banco mantém RLS ativo.
 
 > O modo multiusuário ainda não está pronto para ativação comercial. Não
 > adicione `NEXT_PUBLIC_SUPABASE_*` em produção até a Sprint 4 criar e

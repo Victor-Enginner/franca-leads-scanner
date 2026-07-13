@@ -9,7 +9,8 @@ dependente de credenciais, política comercial e operação real.
 - [x] Mensagens de WhatsApp continuam humanas, revisadas e enviadas manualmente.
 - [x] Google Places permanece a única fonte de dados de negócios.
 - [x] `SUPABASE_SERVICE_ROLE_KEY` permanece somente no servidor.
-- [x] Produção segue protegida por acesso e RLS.
+- [x] RLS e segredos de servidor permanecem protegidos; o painel é público
+  por decisão do responsável.
 - [ ] Nenhuma falha de produção pode ser mascarada como modo demo.
 
 ## Sprint 2 — Jornadas e CRM operacional
@@ -61,4 +62,3 @@ operador, sem abrir cadastro ou expor dados.
   chaves e política comercial do responsável.
 - Cadastro aberto e convite de terceiros: exige decisão de quem pode acessar a
   base e política de retenção de dados.
-
