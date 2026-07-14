@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
             continue;
           }
           const { score, motivo } = scoreOportunidade(detalhes);
-          const mensagem = gerarMensagem(detalhes, motivo, cidade);
+          const mensagem = gerarMensagem(detalhes, motivo, cidade, nicho);
 
           const { data: leadSalvo, error } = await supabase.from("leads").upsert(
             {

@@ -2,34 +2,19 @@ import type { PlaceDetails } from "./places";
 
 export type Motivo = "sem_site" | "so_rede_social" | "poucas_reviews" | "geral";
 
-const MENSAGENS: Record<Motivo, string> = {
+const OPORTUNIDADE: Record<Motivo, string> = {
   sem_site:
-    "Oi, tudo bem? Encontrei o {nome} pesquisando em {cidade} e vi a boa " +
-    "reputação de vocês: nota {rating} em {qtd_reviews} avaliações. Percebi " +
-    "que o perfil do Google ainda não tem um site próprio vinculado. Sou o " +
-    "Vitor, do engenheiro.ai, e ajudo negócios locais a organizar presença " +
-    "digital e atendimento pelo WhatsApp. Hoje os novos contatos de vocês " +
-    "chegam mais pelo WhatsApp ou pelo Instagram?",
+    "Percebi que o perfil do Google ainda não tem um site próprio vinculado, o que pode dificultar que uma busca vire atendimento.",
   so_rede_social:
-    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a reputação de " +
-    "vocês no Google: nota {rating} em {qtd_reviews} avaliações. Reparei " +
-    "que o principal link do perfil leva ao Instagram. Sou o Vitor, do " +
-    "engenheiro.ai, e ajudo negócios locais a transformar essas buscas em " +
-    "conversas e agendamentos. Hoje os novos contatos de vocês chegam mais " +
-    "pelo WhatsApp ou pelo Instagram?",
+    "Reparei que o principal link do perfil leva ao Instagram, e há espaço para transformar essas buscas em conversas e agendamentos.",
   poucas_reviews:
-    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a ótima nota de " +
-    "{rating}, com {qtd_reviews} avaliações no Google. Sou o Vitor, do " +
-    "engenheiro.ai, e ajudo negócios locais a organizar o atendimento e a " +
-    "presença digital para aproveitar melhor cada cliente satisfeito. Vocês " +
-    "já têm algum processo para pedir avaliações depois do atendimento?",
+    "A nota é muito boa; há espaço para aproveitar melhor cada cliente satisfeito e fortalecer essa reputação no Google.",
   geral:
-    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a reputação de " +
-    "vocês no Google. Sou o Vitor, do engenheiro.ai, e ajudo negócios locais " +
-    "a organizar presença digital e atendimento no WhatsApp para transformar " +
-    "pedidos em agendamentos. Hoje os novos contatos de vocês chegam mais " +
-    "pelo WhatsApp ou pelo Instagram?",
+    "Queria entender como está hoje a presença digital e o atendimento de vocês.",
 };
+
+const PERGUNTA_FINAL =
+  "Hoje os novos contatos de vocês chegam mais pelo WhatsApp ou pelo Instagram?";
 
 function ehRedeSocial(url: string): boolean {
   const dominios = ["instagram.com", "facebook.com", "linktr.ee"];
@@ -73,14 +58,33 @@ export function scoreOportunidade(place: PlaceDetails): {
   return { score: Math.min(score, 100), motivo };
 }
 
+function resumoDaReputacao(place: PlaceDetails): string {
+  const rating = place.rating;
+  const reviews = place.user_ratings_total;
+  if (typeof rating === "number" && typeof reviews === "number") {
+    return `vi a reputação de vocês no Google: nota ${rating} em ${reviews} avaliações.`;
+  }
+  return "vi o perfil de vocês no Google.";
+}
+
+/**
+ * Mensagem inicial padronizada: contexto real, apresentação breve,
+ * oportunidade observável e pergunta de diagnóstico. A proposta só entra
+ * depois da resposta humana do negócio.
+ */
 export function gerarMensagem(
   place: PlaceDetails,
   motivo: Motivo,
-  cidade = "sua cidade"
+  cidade = "sua cidade",
+  nicho = "negócios locais"
 ): string {
-  return MENSAGENS[motivo]
-    .replaceAll("{nome}", place.name ?? "")
-    .replaceAll("{rating}", String(place.rating ?? "-"))
-    .replaceAll("{qtd_reviews}", String(place.user_ratings_total ?? "-"))
-    .replaceAll("{cidade}", cidade);
+  const nichoDaBusca = nicho.trim() || "negócios locais";
+  const cidadeDaBusca = cidade.trim() || "sua cidade";
+  const nome = place.name?.trim() || "seu negócio";
+
+  return [
+    `Oi, tudo bem? Encontrei ${nome} pesquisando ${nichoDaBusca} em ${cidadeDaBusca} e ${resumoDaReputacao(place)}`,
+    `Sou o Vitor, do engenheiro.ai, e ajudo negócios locais a organizar presença digital e atendimento no WhatsApp. ${OPORTUNIDADE[motivo]}`,
+    PERGUNTA_FINAL,
+  ].join(" ");
 }
