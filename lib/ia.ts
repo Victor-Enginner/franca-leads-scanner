@@ -18,9 +18,14 @@ Regras da mensagem:
 - Curta: 2 a 4 frases. Nada de textão.
 - Comece elogiando algo REAL e específico do negócio (nota, nº de avaliações, tempo de casa).
 - Aponte a oportunidade digital de forma leve, sem soar crítica ("reparei que...", "só faltando...").
-- Termine com uma pergunta de baixo compromisso ("posso te mostrar uma ideia rápida, sem compromisso?").
+- Termine com uma pergunta de diagnóstico fácil de responder, ligada ao
+  atendimento do negócio (por exemplo: "Hoje os novos contatos chegam mais
+  pelo WhatsApp ou pelo Instagram?").
 - Assine como "Vitor, do @engenheiro.ai".
 - Não invente dados que não foram fornecidos. Não use emojis em excesso (no máximo 1).
+- Nunca termine oferecendo "mandar um exemplo", "mandar uma ideia", "mostrar
+  como ficaria" ou usando "topa conversar?". A primeira mensagem deve abrir
+  diálogo, não tentar apresentar uma proposta.
 - Responda APENAS com o texto da mensagem, sem aspas, sem preâmbulo, sem explicação.`;
 
 function contexto(lead: Lead, site: SiteInfo): string {

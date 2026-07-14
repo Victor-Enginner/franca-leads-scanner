@@ -106,7 +106,7 @@ export default function TargetCard({
             disabled={gerando}
             className="mt-2 flex w-full items-center justify-center gap-1 rounded-sm border border-magenta/60 bg-magenta/5 px-2 py-2 font-mono text-[9px] uppercase tracking-wide text-magenta transition-colors hover:bg-magenta/15 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {gerando ? "processando..." : "✦ gerar mensagem com IA"}
+            {gerando ? "processando..." : "✦ criar versão personalizada"}
           </button>
         )}
         <div className="mt-2.5 flex gap-1.5">

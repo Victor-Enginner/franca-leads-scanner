@@ -21,6 +21,13 @@ describe("score e mensagem de oportunidade", () => {
     expect(mensagem).not.toContain("em Franca");
   });
 
+  it("abre diálogo sem oferecer exemplo genérico", () => {
+    const mensagem = gerarMensagem(place, "geral", "Franca, SP");
+
+    expect(mensagem).not.toMatch(/mandar (um )?(exemplo|ideia)/i);
+    expect(mensagem).toContain("WhatsApp ou pelo Instagram?");
+  });
+
   it("identifica somente os status fechados da Places API", () => {
     expect(negocioEncerrado("CLOSED_PERMANENTLY")).toBe(true);
     expect(negocioEncerrado("CLOSED_TEMPORARILY")).toBe(true);

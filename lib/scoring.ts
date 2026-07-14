@@ -4,25 +4,31 @@ export type Motivo = "sem_site" | "so_rede_social" | "poucas_reviews" | "geral";
 
 const MENSAGENS: Record<Motivo, string> = {
   sem_site:
-    "Oi! Vi o {nome} em {cidade} — {qtd_reviews} avaliações, nota {rating}, " +
-    "mas sem site próprio ainda. Isso é cliente indo pra concorrência que " +
-    "aparece primeiro no Google. Faço sites simples e rápidos, com automação " +
-    "de WhatsApp incluída. Posso te mostrar um exemplo de como ficaria o de " +
-    "vocês, sem compromisso?",
+    "Oi, tudo bem? Encontrei o {nome} pesquisando em {cidade} e vi a boa " +
+    "reputação de vocês: nota {rating} em {qtd_reviews} avaliações. Percebi " +
+    "que o perfil do Google ainda não tem um site próprio vinculado. Sou o " +
+    "Vitor, do engenheiro.ai, e ajudo negócios locais a organizar presença " +
+    "digital e atendimento pelo WhatsApp. Hoje os novos contatos de vocês " +
+    "chegam mais pelo WhatsApp ou pelo Instagram?",
   so_rede_social:
-    "Oi! Vi o {nome} em {cidade} — {qtd_reviews} avaliações, nota {rating}, mas o único " +
-    "link que aparece no Google é o Instagram. Um site próprio (mesmo " +
-    "simples) ajuda a converter muito mais quem já gostou do trabalho de " +
-    "vocês. Posso te mandar uma ideia rápida?",
+    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a reputação de " +
+    "vocês no Google: nota {rating} em {qtd_reviews} avaliações. Reparei " +
+    "que o principal link do perfil leva ao Instagram. Sou o Vitor, do " +
+    "engenheiro.ai, e ajudo negócios locais a transformar essas buscas em " +
+    "conversas e agendamentos. Hoje os novos contatos de vocês chegam mais " +
+    "pelo WhatsApp ou pelo Instagram?",
   poucas_reviews:
-    "Oi! Vi o {nome} em {cidade}, ótima nota ({rating}⭐) mas pouca gente " +
-    "avaliando ainda — isso é oportunidade perdida no Google. Ajudo " +
-    "negócios locais a aparecer mais e converter mais avaliação em cliente " +
-    "novo. Topa ver uma ideia rápida?",
+    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a ótima nota de " +
+    "{rating}, com {qtd_reviews} avaliações no Google. Sou o Vitor, do " +
+    "engenheiro.ai, e ajudo negócios locais a organizar o atendimento e a " +
+    "presença digital para aproveitar melhor cada cliente satisfeito. Vocês " +
+    "já têm algum processo para pedir avaliações depois do atendimento?",
   geral:
-    "Oi! Vi o {nome} em {cidade}. Ajudo negócios locais a vender mais " +
-    "com automação de WhatsApp, Instagram e presença digital — posso te " +
-    "mandar um exemplo rápido do que consigo fazer pro seu ramo?",
+    "Oi, tudo bem? Encontrei o {nome} em {cidade} e vi a reputação de " +
+    "vocês no Google. Sou o Vitor, do engenheiro.ai, e ajudo negócios locais " +
+    "a organizar presença digital e atendimento no WhatsApp para transformar " +
+    "pedidos em agendamentos. Hoje os novos contatos de vocês chegam mais " +
+    "pelo WhatsApp ou pelo Instagram?",
 };
 
 function ehRedeSocial(url: string): boolean {

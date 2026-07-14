@@ -501,7 +501,7 @@ export default function ScannerDashboard({
           l.id === lead.id ? { ...l, mensagem_sugerida: data.mensagem } : l
         )
       );
-      showToast("MENSAGEM GERADA POR IA ✦");
+      showToast("VERSÃO PERSONALIZADA CRIADA ✦");
       beep(680, 0.08);
     } catch (e) {
       showToast("FALHA NA IA — VER CONSOLE");
