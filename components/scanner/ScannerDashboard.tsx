@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Lead, LeadStatus } from "@/lib/supabase";
 import Globe, { type GlobeHandle } from "./Globe";
 import ScanSequence from "./ScanSequence";
@@ -9,6 +9,7 @@ import FunnelTracker from "./FunnelTracker";
 import SystemLog, { type LogLine } from "./SystemLog";
 import KanbanBoard from "./KanbanBoard";
 import { baixarCSV, abrirRelatorio } from "./export";
+import { ResizeHandle, useIsDesktop, usePainelLargura } from "./resize";
 import { DEMO_STORE_KEY, FRANCA, scoreColor } from "./util";
 
 type Vista = "radar" | "funil";
@@ -106,6 +107,12 @@ export default function ScannerDashboard({
   ]);
 
   const globeRef = useRef<GlobeHandle>(null);
+  // Painéis redimensionáveis (só no desktop; larguras persistidas).
+  const desktop = useIsDesktop();
+  const gridExternoRef = useRef<HTMLDivElement>(null);
+  const gridRadarRef = useRef<HTMLDivElement>(null);
+  const [railW, setRailW] = usePainelLargura("nexus_rail_w", 300, 220, 480);
+  const [globeW, setGlobeW] = usePainelLargura("nexus_globe_w", 380, 220, 760);
   const leadsRef = useRef(leads);
   const scanningRef = useRef(false);
   const skipRef = useRef(false);
@@ -516,6 +523,22 @@ export default function ScannerDashboard({
     beep(fechado ? 400 : 720, 0.08);
   }
 
+  // Divisórias: largura = posição do cursor menos a borda esquerda do grid.
+  const arrastarRail = useCallback(
+    (x: number) => {
+      const el = gridExternoRef.current;
+      if (el) setRailW(x - el.getBoundingClientRect().left);
+    },
+    [setRailW]
+  );
+  const arrastarGlobe = useCallback(
+    (x: number) => {
+      const el = gridRadarRef.current;
+      if (el) setGlobeW(x - el.getBoundingClientRect().left);
+    },
+    [setGlobeW]
+  );
+
   const feedLeads = feedIds
     .map((id) => leads.find((l) => l.id === id))
     .filter((l): l is Lead => Boolean(l));
@@ -530,8 +553,8 @@ export default function ScannerDashboard({
         </div>
       )}
       {/* HUD superior */}
-      <div className="relative z-10 flex items-center justify-between border-b border-grid bg-gradient-to-b from-panel/90 to-panel/30 px-7 py-4 backdrop-blur-md">
-        <div className="flex items-center gap-3.5">
+      <div className="relative z-10 flex items-center justify-between gap-2 border-b border-grid bg-gradient-to-b from-panel/90 to-panel/30 px-3 py-3 backdrop-blur-md sm:px-7 sm:py-4">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
           <svg viewBox="0 0 40 40" fill="none" className="h-10 w-10">
             <circle cx="20" cy="20" r="18" stroke="#00f0ff" strokeWidth="1" opacity="0.4" />
             <circle cx="20" cy="20" r="12" stroke="#00f0ff" strokeWidth="1.5" />
@@ -542,28 +565,28 @@ export default function ScannerDashboard({
             <line x1="32" y1="20" x2="38" y2="20" stroke="#00f0ff" strokeWidth="1.5" />
           </svg>
           <div>
-            <h1 className="font-body text-lg font-bold leading-none tracking-tight text-text-primary">
+            <h1 className="truncate font-body text-base font-bold leading-none tracking-tight text-text-primary sm:text-lg">
               NEXUS SCAN
             </h1>
-            <span className="font-mono text-[10px] tracking-wide text-text-dim">
+            <span className="hidden font-mono text-[10px] tracking-wide text-text-dim sm:block">
               Prospecção local
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="hidden text-right sm:block">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4 lg:gap-6">
+          <div className="hidden text-right lg:block">
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Setor</div>
             <div className="max-w-[180px] truncate font-display text-base font-bold">{setorLabel}</div>
           </div>
-          <div className="text-right">
+          <div className="hidden text-right sm:block">
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Alvos</div>
             <div className="font-display text-base font-bold text-lime">{feedLeads.length}</div>
           </div>
-          <div className="text-right">
+          <div className="hidden text-right sm:block">
             <div className="font-mono text-[9px] uppercase tracking-[2px] text-text-dim">Quentes</div>
             <div className="font-display text-base font-bold text-amber">{quentes}</div>
           </div>
-          <div className="flex overflow-hidden rounded-sm border border-grid">
+          <div className="flex shrink-0 overflow-hidden rounded-sm border border-grid">
             {(["radar", "funil"] as const).map((v) => (
               <button
                 key={v}
@@ -607,10 +630,18 @@ export default function ScannerDashboard({
         </div>
       </div>
 
-      {/* Palco: rail esquerdo + área de trabalho (radar OU funil) */}
-      <div className="relative grid h-auto lg:h-[calc(100vh-73px)] lg:grid-cols-[300px_1fr]">
+      {/* Palco: rail esquerdo + divisória + área de trabalho (radar OU funil) */}
+      <div
+        ref={gridExternoRef}
+        className="relative grid h-auto lg:h-[calc(100dvh-65px)] lg:grid-cols-[300px_1px_minmax(0,1fr)]"
+        style={
+          desktop
+            ? { gridTemplateColumns: `${railW}px 1px minmax(0,1fr)` }
+            : undefined
+        }
+      >
         {/* Rail esquerdo */}
-        <div className="flex flex-col gap-5 overflow-y-auto border-b border-grid bg-panel p-5 lg:border-b-0 lg:border-r">
+        <div className="flex flex-col gap-5 overflow-y-auto border-b border-grid bg-panel p-5 lg:border-b-0">
           <div>
             <div className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[3px] text-cyan-dim">
               Configurar varredura
@@ -694,17 +725,26 @@ export default function ScannerDashboard({
 
         </div>
 
+        {/* Divisória arrastável: rail ↔ área de trabalho */}
+        <ResizeHandle onDrag={arrastarRail} ariaLabel="Redimensionar painel esquerdo" />
+
         {/* Área de trabalho: alterna entre radar (globo+feed) e funil (kanban).
             O globo NUNCA desmonta — só é escondido via CSS pra preservar o
             contexto WebGL. */}
         <div className="relative lg:min-h-0 lg:overflow-hidden">
         <div
-          className={`grid h-full grid-rows-[220px_auto] lg:grid-rows-1 lg:grid-cols-[280px_1fr] ${
+          ref={gridRadarRef}
+          className={`grid h-full grid-rows-[46vh_auto] lg:grid-rows-1 lg:grid-cols-[380px_1px_minmax(0,1fr)] ${
             vista === "funil" ? "hidden" : ""
           }`}
+          style={
+            desktop
+              ? { gridTemplateColumns: `${globeW}px 1px minmax(0,1fr)` }
+              : undefined
+          }
         >
         {/* Palco do globo */}
-        <div className="relative min-h-[220px] overflow-hidden border-b border-grid bg-void-2 lg:min-h-0 lg:border-b-0 lg:border-r">
+        <div className="relative min-h-[46vh] overflow-hidden border-b border-grid bg-void-2 lg:min-h-0 lg:border-b-0">
           <Globe ref={globeRef} />
           <ScanSequence
             phase={phase}
@@ -721,6 +761,9 @@ export default function ScannerDashboard({
             }}
           />
         </div>
+
+        {/* Divisória arrastável: globo ↔ feed */}
+        <ResizeHandle onDrag={arrastarGlobe} ariaLabel="Redimensionar o globo" />
 
         {/* Rail direito: feed de alvos. min-h-0 + overflow-hidden no lg são
             OBRIGATÓRIOS: sem eles, centenas de cards esticam a linha do
