@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --brand: #0071E3;
+    --brand-light: rgba(0, 113, 227, 0.1);
+    --brand-dark: #005EC2;
+    --success: #1A7E3A;
+    --warning: #FF9F0A;
+    --danger: #D92D20;
+    --border: #dee2e6;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-[var(--border)] bg-white/60 backdrop-blur-xl shadow-sm;
+  }
+
+  .glass-btn {
+    @apply rounded-full border border-[var(--border)] bg-white/40 backdrop-blur-md transition-all hover:bg-white/60;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-[var(--brand)] px-7 py-3.5 text-[15px] font-bold text-white shadow-lg transition-all hover:opacity-90;
+    box-shadow: 0 8px 28px rgba(0, 113, 227, 0.35);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glow {
+    @apply absolute rounded-full;
+    filter: blur(100px);
+    z-index: -1;
+  }
+
+  .reveal {
+    @apply opacity-0 translate-y-5;
+    animation: reveal 0.6s ease-out forwards;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+}
+
+@layer utilities {
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

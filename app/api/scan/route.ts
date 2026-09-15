@@ -188,57 +188,60 @@ export async function POST(req: NextRequest) {
       let salvos = 0;
       let ignorados = 0;
 
-      for (const r of resultados) {
-        try {
-          const detalhes = await detalhesDoLugar(r.place_id);
-          if (negocioEncerrado(detalhes.business_status)) {
-            ignorados += 1;
-            continue;
-          }
-          const { score, motivo } = scoreOportunidade(detalhes);
-          const mensagem = gerarMensagem(detalhes, motivo, cidade, nicho);
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < resultados.length; i += BATCH_SIZE) {
+        const batch = resultados.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (r) => {
+            try {
+              const detalhes = await detalhesDoLugar(r.place_id);
+              if (negocioEncerrado(detalhes.business_status)) {
+                ignorados += 1;
+                return;
+              }
+              const { score, motivo } = scoreOportunidade(detalhes);
+              const mensagem = gerarMensagem(detalhes, motivo, cidade, nicho);
 
-          const { data: leadSalvo, error } = await supabase.from("leads").upsert(
-            {
-              place_id: detalhes.place_id,
-              nicho,
-              nome: detalhes.name,
-              endereco: detalhes.formatted_address ?? null,
-              telefone: detalhes.formatted_phone_number ?? null,
-              site: detalhes.website ?? null,
-              rating: detalhes.rating ?? null,
-              qtd_reviews: detalhes.user_ratings_total ?? null,
-              score_oportunidade: score,
-              motivo_abordagem: motivo,
-              mensagem_sugerida: mensagem,
-              lat: detalhes.geometry?.location?.lat ?? null,
-              lon: detalhes.geometry?.location?.lng ?? null,
-              cidade,
-              ...(userId ? { user_id: userId } : {}),
-            },
-            {
-              // Multiusuário: cada operador tem seu próprio universo de
-              // leads — o mesmo negócio pode existir pra dois usuários.
-              onConflict: userId ? "user_id,place_id" : "place_id",
-              ignoreDuplicates: false,
+              const { data: leadSalvo, error } = await supabase.from("leads").upsert(
+                {
+                  place_id: detalhes.place_id,
+                  nicho,
+                  nome: detalhes.name,
+                  endereco: detalhes.formatted_address ?? null,
+                  telefone: detalhes.formatted_phone_number ?? null,
+                  site: detalhes.website ?? null,
+                  rating: detalhes.rating ?? null,
+                  qtd_reviews: detalhes.user_ratings_total ?? null,
+                  score_oportunidade: score,
+                  motivo_abordagem: motivo,
+                  mensagem_sugerida: mensagem,
+                  lat: detalhes.geometry?.location?.lat ?? null,
+                  lon: detalhes.geometry?.location?.lng ?? null,
+                  cidade,
+                  ...(userId ? { user_id: userId } : {}),
+                },
+                {
+                  // Multiusuário: cada operador tem seu próprio universo de
+                  // leads — o mesmo negócio pode existir pra dois usuários.
+                  onConflict: userId ? "user_id,place_id" : "place_id",
+                  ignoreDuplicates: false,
+                }
+              ).select("*").single();
+
+              if (error) throw error;
+              if (!leadSalvo) throw new Error("Lead não retornado após salvar");
+              await vincularLeadAVarredura(supabase, {
+                varreduraId: varredura.id,
+                lead: leadSalvo as Lead,
+              });
+              salvos += 1;
+            } catch (innerErr) {
+              erros.push(
+                `Falha ao processar place_id ${r.place_id}: ${descreverErro(innerErr)}`
+              );
             }
-          ).select("*").single();
-
-          if (error) throw error;
-          if (!leadSalvo) throw new Error("Lead não retornado após salvar");
-          await vincularLeadAVarredura(supabase, {
-            varreduraId: varredura.id,
-            lead: leadSalvo as Lead,
-          });
-          salvos += 1;
-
-          // respeita rate limit da Places API
-          await new Promise((resolve) => setTimeout(resolve, 150));
-        } catch (innerErr) {
-          erros.push(
-            `Falha ao processar place_id ${r.place_id}: ${descreverErro(innerErr)}`
-          );
-        }
+          })
+        );
       }
 
       resumo.push({ nicho, encontrados: resultados.length, salvos, ignorados });

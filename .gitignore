@@ -16,3 +16,8 @@ npm-debug.log*
 
 # tooling local do Claude Code
 /.claude
+
+**/node_modules/
+**/.next/
+**/.env.local
+

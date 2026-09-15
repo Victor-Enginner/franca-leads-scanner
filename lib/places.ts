@@ -79,9 +79,16 @@ export type CidadeGeo = {
  */
 export async function geocodificarCidade(cidade: string): Promise<CidadeGeo> {
   const query = encodeURIComponent(cidade);
-  const url = `${PLACES_BASE}/textsearch/json?query=${query}&language=pt-BR&key=${apiKey()}`;
-  const resp = await fetch(url);
-  const data = await resp.json();
+  let url = `${PLACES_BASE}/textsearch/json?query=${query}&language=pt-BR&key=${apiKey()}`;
+  let resp = await fetch(url);
+  let data = await resp.json();
+
+  if (data.status !== "OK" || !data.results?.length) {
+    const fallbackQuery = encodeURIComponent(`${cidade}, Brasil`);
+    url = `${PLACES_BASE}/textsearch/json?query=${fallbackQuery}&language=pt-BR&key=${apiKey()}`;
+    resp = await fetch(url);
+    data = await resp.json();
+  }
 
   if (data.status !== "OK" || !data.results?.length) {
     throw new Error(`Cidade não encontrada: "${cidade}" (${data.status})`);
